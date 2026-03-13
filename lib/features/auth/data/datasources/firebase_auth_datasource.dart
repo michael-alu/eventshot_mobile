@@ -24,5 +24,15 @@ class FirebaseAuthDataSource {
     return _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
+  Future<void> sendEmailVerification() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
+  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+
+  Future<void> reloadUser() async {
+    await _auth.currentUser?.reload();
+  }
+
   Future<void> signOut() => _auth.signOut();
 }
