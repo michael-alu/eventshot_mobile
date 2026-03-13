@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../../domain/entities/organizer.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/firebase_auth_datasource.dart';
-import '../datasources/organizer_remote_datasource.dart'; // file keeps original name
+import '../datasources/organizer_remote_datasource.dart';
 import '../models/organizer_model.dart';
 
 /// Firebase-backed implementation of [AuthRepository].
@@ -74,8 +77,32 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Organizer?> signInWithGoogle() async {
-    // TODO: implement with google_sign_in + Firebase signInWithCredential
-    return null;
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) return null; // user cancelled
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final cred =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+    final user = cred.user;
+    if (user == null) return null;
+
+    // check if user profile exists in Firestore, create if not
+    var profile = await _userRemote.getUser(user.uid);
+    if (profile == null) {
+      profile = OrganizerModel(
+        id: user.uid,
+        email: user.email ?? '',
+        displayName: user.displayName ?? '',
+        createdAt: DateTime.now(),
+      );
+      await _userRemote.setUser(profile);
+    }
+    return profile.toEntity();
   }
 
   @override
@@ -92,6 +119,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> reloadUser() => _auth.reloadUser();
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) =>
+      _auth.sendPasswordResetEmail(email: email);
 
   @override
   Future<void> signOut() => _auth.signOut();
