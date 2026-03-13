@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../domain/entities/event.dart';
 
 class EventModel {
@@ -7,6 +9,9 @@ class EventModel {
     required this.date,
     required this.tierId,
     this.organizerId,
+    this.joinCode = '',
+    this.maxPhotos = -1,
+    this.qrData = '',
     this.photoCount = 0,
     this.attendeeCount = 0,
     this.storageBytes = 0,
@@ -17,6 +22,9 @@ class EventModel {
   final DateTime date;
   final String tierId;
   final String? organizerId;
+  final String joinCode;
+  final int maxPhotos;
+  final String qrData;
   final int photoCount;
   final int attendeeCount;
   final int storageBytes;
@@ -28,6 +36,9 @@ class EventModel {
       date: DateTime.parse(json['date'] as String),
       tierId: json['tierId'] as String,
       organizerId: json['organizerId'] as String?,
+      joinCode: json['joinCode'] as String? ?? '',
+      maxPhotos: json['maxPhotos'] as int? ?? -1,
+      qrData: json['qrData'] as String? ?? '',
       photoCount: json['photoCount'] as int? ?? 0,
       attendeeCount: json['attendeeCount'] as int? ?? 0,
       storageBytes: json['storageBytes'] as int? ?? 0,
@@ -41,6 +52,9 @@ class EventModel {
       'date': date.toIso8601String(),
       'tierId': tierId,
       if (organizerId != null) 'organizerId': organizerId,
+      'joinCode': joinCode,
+      'maxPhotos': maxPhotos,
+      'qrData': qrData,
       'photoCount': photoCount,
       'attendeeCount': attendeeCount,
       'storageBytes': storageBytes,
@@ -53,8 +67,18 @@ class EventModel {
         date: date,
         tierId: tierId,
         organizerId: organizerId,
+        joinCode: joinCode,
+        maxPhotos: maxPhotos,
+        qrData: qrData,
         photoCount: photoCount,
         attendeeCount: attendeeCount,
         storageBytes: storageBytes,
       );
+
+  /// Generates a random 6-character alphanumeric join code.
+  static String generateJoinCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final rng = Random();
+    return List.generate(6, (_) => chars[rng.nextInt(chars.length)]).join();
+  }
 }
