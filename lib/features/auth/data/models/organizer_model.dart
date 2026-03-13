@@ -6,6 +6,7 @@ class OrganizerModel {
     required this.id,
     required this.email,
     required this.displayName,
+    this.role = 'organizer',
     this.plan,
     this.createdAt,
   });
@@ -13,6 +14,7 @@ class OrganizerModel {
   final String id;
   final String email;
   final String displayName;
+  final String role;
   final String? plan;
   final DateTime? createdAt;
 
@@ -20,7 +22,8 @@ class OrganizerModel {
     return OrganizerModel(
       id: json['id'] as String,
       email: json['email'] as String,
-      displayName: json['displayName'] as String? ?? '',
+      displayName: (json['name'] ?? json['displayName'] ?? '') as String,
+      role: (json['role'] ?? 'organizer') as String,
       plan: json['plan'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -32,7 +35,8 @@ class OrganizerModel {
     return {
       'id': id,
       'email': email,
-      'displayName': displayName,
+      'name': displayName,
+      'role': role,
       if (plan != null) 'plan': plan,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     };
