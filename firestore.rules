@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isEventOrganizer(eventId) {
+      let event = get(/databases/$(database)/documents/events/$(eventId));
+      return isAuthenticated() && event.data.organizerId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------------------------
+    // /users Collection (Organizers Profile)
+    // ------------------------------------------------------------------------
+    match /users/{userId} {
+      // Anyone can create a profile upon signup
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Users can only read/update their own profile
+      allow read, update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false; // Soft deletes handled by a function later if needed
+    }
+
+    // ------------------------------------------------------------------------
+    // /events Collection
+    // ------------------------------------------------------------------------
+    match /events/{eventId} {
+      // Any authenticated organizer can create an event
+      allow create: if isAuthenticated() && request.resource.data.organizerId == request.auth.uid;
+      
+      // Organizers can read their own events. 
+      // (Attendees querying by joinCode need read access too, so we allow public read)
+      allow read: if true; 
+      
+      // Only the event creator can update/delete it, OR attendees joining
+      // (When an attendee joins, the app increments attendeeCount, so we must allow that specific update)
+      allow update: if isEventOrganizer(eventId) || 
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCount', 'photoCount']));
+                    
+      allow delete: if isEventOrganizer(eventId);
+    }
+
+    // ------------------------------------------------------------------------
+    // /photos Collection
+    // ------------------------------------------------------------------------
+    match /photos/{photoId} {
+      // Anyone (even anonymous attendees) can view active photos for an event
+      allow read: if true; 
+      
+      // Anyone can upload a photo (attendees are tracked by their anonymous session ID or name string)
+      allow create: if true;
+      
+      // Organizers can delete photos from their events
+      // Anyone can 'like' a photo (incrementing the likesCount)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount']) || 
+                    isEventOrganizer(resource.data.eventId);
+                    
+      allow delete: if isEventOrganizer(resource.data.eventId);
+    }
+
+    // ------------------------------------------------------------------------
+    // /event_members Collection (Attendees)
+    // ------------------------------------------------------------------------
+    match /event_members/{memberId} {
+      // Anyone can join an event
+      allow create: if true;
+      
+      // Anyone can read member lists (to show "Who's here")
+      allow read: if true;
+      
+      // Organizers can soft-delete members
+      allow update: if isEventOrganizer(resource.data.eventId);
+      
+      allow delete: if isEventOrganizer(resource.data.eventId);
+    }
+  }
+}
