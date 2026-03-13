@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
@@ -12,10 +13,12 @@ class OrganizerSignUpScreen extends ConsumerStatefulWidget {
   const OrganizerSignUpScreen({super.key});
 
   @override
-  ConsumerState<OrganizerSignUpScreen> createState() => _OrganizerSignUpScreenState();
+  ConsumerState<OrganizerSignUpScreen> createState() =>
+      _OrganizerSignUpScreenState();
 }
 
-class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
+class _OrganizerSignUpScreenState
+    extends ConsumerState<OrganizerSignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -53,8 +56,29 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final user = await repo.signInWithGoogle();
+      if (user != null && mounted) {
+        context.go(AppRouter.organizerDashboard);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: const EsAppBar(title: 'Sign Up'),
       body: SafeArea(
@@ -66,35 +90,45 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 24),
+                // QR icon
                 Center(
-                  child: Icon(
-                    Icons.qr_code_2,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.primary,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Icons.qr_code_2,
+                      size: 40,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Create Organizer Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Set up your event hub and start capturing memories.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
+                // form fields
                 EsTextField(
                   controller: _nameController,
                   label: 'Full Name',
                   hint: 'John Doe',
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 16),
                 EsTextField(
@@ -102,7 +136,13 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
                   label: 'Email Address',
                   hint: 'organizer@event.com',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Required';
+                    if (!v.contains('@') || !v.contains('.')) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 EsTextField(
@@ -111,10 +151,17 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
                   hint: '••••••••',
                   obscureText: _obscurePassword,
                   suffix: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.length < 6) ? 'At least 6 characters' : null,
+                  validator: (v) => (v == null || v.length < 6)
+                      ? 'At least 6 characters'
+                      : null,
                 ),
                 const SizedBox(height: 32),
                 PrimaryButton(
@@ -123,10 +170,92 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
                   isLoading: _isLoading,
                 ),
                 const SizedBox(height: 24),
+                // divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR CONTINUE WITH',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // social buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.apple, size: 20),
+                        label: const Text('Apple'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _signInWithGoogle,
+                        icon: const Icon(Icons.mail_outline, size: 20),
+                        label: const Text('Google'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // login link
                 TextButton(
                   onPressed: () => context.go(AppRouter.organizerLogin),
-                  child: const Text('Already have an account? Log In'),
+                  child: Text.rich(
+                    TextSpan(
+                      text: 'Already have an account? ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Log In',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 16),
+                // terms
+                Text(
+                  'By signing up, you agree to our\nTerms of Service and Privacy Policy.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),

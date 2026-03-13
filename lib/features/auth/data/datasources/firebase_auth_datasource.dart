@@ -34,5 +34,9 @@ class FirebaseAuthDataSource {
     await _auth.currentUser?.reload();
   }
 
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
   Future<void> signOut() => _auth.signOut();
 }
