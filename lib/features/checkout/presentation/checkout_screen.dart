@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/providers/preferences_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
@@ -22,8 +23,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Future<void> _submit() async {
     setState(() => _isLoading = true);
+    
+    // Simulate payment processing
     await Future.delayed(const Duration(seconds: 1));
+    
     if (mounted) {
+      // Save the last event ID to preferences so the app remembers their context
+      ref.read(lastEventIdProvider.notifier).state = widget.eventId;
+      
       setState(() => _isLoading = false);
       context.go(AppRouter.organizerDashboard);
     }
@@ -84,8 +91,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 12),
             EsTextField(label: 'Cardholder Name', hint: 'John Doe'),
             const SizedBox(height: 12),
-            EsTextField(label: 'Card Number', hint: '0000 0000 0000 0000', keyboardType: TextInputType.number),
-            const SizedBox(height: 24),
+            EsTextField(
+              label: 'Card Number', 
+              hint: '0000 0000 0000 0000', 
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: EsTextField(
+                    label: 'Expiry Date',
+                    hint: 'MM/YY',
+                    keyboardType: TextInputType.datetime,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: EsTextField(
+                    label: 'CVC',
+                    hint: '123',
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            EsTextField(
+              label: 'Zip / Postal Code',
+              hint: '10001',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 32),
             PrimaryButton(
               label: 'Pay & Create QR',
               onPressed: _submit,
