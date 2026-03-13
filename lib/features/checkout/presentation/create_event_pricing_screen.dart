@@ -113,20 +113,51 @@ class _CreateEventPricingScreenState extends ConsumerState<CreateEventPricingScr
                   ),
             ),
             const SizedBox(height: 16),
-            ...tiers.map(
-              (t) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: TierCard(
-                  title: t.name,
-                  subtitle: t.description,
-                  price: t.priceFormatted,
-                  priceSuffix: t.priceLabel,
-                  features: t.features,
-                  isSelected: t.id == selectedTierId,
-                  badge: t.isPopular ? 'Most Popular' : null,
-                  onTap: () => ref.read(selectedTierIdProvider.notifier).state = t.id,
-                ),
+            SizedBox(
+              height: 380, // Fixed height for the PageView containing TierCards
+              child: PageView.builder(
+                controller: PageController(viewportFraction: 0.9),
+                itemCount: tiers.length,
+                onPageChanged: (index) {
+                  ref.read(selectedTierIdProvider.notifier).state = tiers[index].id;
+                },
+                itemBuilder: (context, index) {
+                  final t = tiers[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: TierCard(
+                      title: t.name,
+                      subtitle: t.description,
+                      price: t.priceFormatted,
+                      priceSuffix: t.priceLabel,
+                      features: t.features,
+                      isSelected: t.id == selectedTierId,
+                      badge: t.isPopular ? 'Most Popular' : null,
+                      onTap: () => ref.read(selectedTierIdProvider.notifier).state = t.id,
+                    ),
+                  );
+                },
               ),
+            ),
+            const SizedBox(height: 16),
+            // Dot Indicators
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(tiers.length, (index) {
+                final isSelected = tiers[index].id == selectedTierId;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: isSelected ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? Theme.of(context).colorScheme.primary 
+                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: 24),
             PrimaryButton(

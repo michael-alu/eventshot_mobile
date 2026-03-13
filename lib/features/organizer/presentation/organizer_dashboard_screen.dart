@@ -150,7 +150,7 @@ class OrganizerDashboardScreen extends ConsumerWidget {
               icon: const Icon(Icons.qr_code_2, color: Colors.white, size: 22),
               onPressed: () => QrInviteDialog.show(
                 context,
-                joinCode: event.id.length >= 6 ? event.id.substring(0, 6).toUpperCase() : event.id.toUpperCase().padRight(6),
+                joinCode: event.joinCode.isEmpty ? 'LOADING' : event.joinCode,
                 onCopyLink: () => Navigator.of(context).pop(),
                 onSaveQr: () => Navigator.of(context).pop(),
               ),

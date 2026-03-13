@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -90,16 +91,19 @@ class QrInviteDialog extends StatelessWidget {
                 ],
               ),
               child: qrWidget ??
-                  SizedBox(
-                    width: 192,
-                    height: 192,
-                    child: Center(
-                      child: Icon(
-                        Icons.qr_code_2,
-                        size: 120,
-                        color: AppColors.primary.withValues(alpha: 0.5),
-                      ),
+                  QrImageView(
+                    data: 'eventshot://join/$joinCode',
+                    version: QrVersions.auto,
+                    size: 192,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Colors.black,
                     ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Colors.black,
+                    ),
+                    errorCorrectionLevel: QrErrorCorrectLevel.H,
                   ),
             ),
             const SizedBox(height: 24),
