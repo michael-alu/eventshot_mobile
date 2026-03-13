@@ -11,4 +11,10 @@ abstract class EventRepository {
   Stream<Event?> watchEvent(String eventId);
 
   Future<Event?> getEvent(String eventId);
+
+  Future<void> updateEvent(Event event);
+
+  Future<void> deleteEvent(String eventId);
+
+  Stream<List<Event>> getOrganizerEvents(String organizerId);
 }
