@@ -41,7 +41,7 @@ class _OrganizerSignUpScreenState extends ConsumerState<OrganizerSignUpScreen> {
         password: _passwordController.text,
         displayName: _nameController.text.trim(),
       );
-      if (mounted) context.go(AppRouter.organizerDashboard);
+      if (mounted) context.go(AppRouter.emailVerification);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

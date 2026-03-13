@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/attendee/presentation/manual_code_entry_screen.dart';
+import '../../features/auth/presentation/email_verification_screen.dart';
 import '../../features/auth/presentation/organizer_login_screen.dart';
 import '../../features/auth/presentation/organizer_signup_screen.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
@@ -18,6 +19,7 @@ class AppRouter {
   static const String organizerSignUp = '/auth/organizer-signup';
   static const String organizerLogin = '/auth/organizer-login';
   static const String organizerDashboard = '/organizer/dashboard';
+  static const String emailVerification = '/auth/verify-email';
   static const String organizerEvents = '/organizer/events';
   static const String organizerProfile = '/organizer/profile';
   static const String attendeeScan = '/attendee/scan';
@@ -49,6 +51,10 @@ class AppRouter {
         GoRoute(
           path: organizerLogin,
           builder: (context, state) => const OrganizerLoginScreen(),
+        ),
+        GoRoute(
+          path: emailVerification,
+          builder: (context, state) => const EmailVerificationScreen(),
         ),
         GoRoute(
           path: createEvent,

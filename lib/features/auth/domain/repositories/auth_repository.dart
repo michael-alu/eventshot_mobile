@@ -19,5 +19,11 @@ abstract class AuthRepository {
 
   Future<Organizer?> signInWithApple();
 
+  Future<void> sendEmailVerification();
+
+  bool get isEmailVerified;
+
+  Future<void> reloadUser();
+
   Future<void> signOut();
 }
