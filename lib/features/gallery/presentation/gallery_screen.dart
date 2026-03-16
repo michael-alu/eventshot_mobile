@@ -7,9 +7,10 @@ import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
 
 class GalleryScreen extends ConsumerStatefulWidget {
-  const GalleryScreen({super.key, required this.eventId});
+  const GalleryScreen({super.key, required this.eventId, this.eventTitle});
 
   final String eventId;
+  final String? eventTitle;
 
   @override
   ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
@@ -20,9 +21,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.eventTitle ?? widget.eventId;
     return Scaffold(
       appBar: EsAppBar(
-        title: 'Event Gallery',
+        title: title,
         actions: [
           TextButton(
             onPressed: () {},
@@ -46,7 +48,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             onAction: () {},
           ),
           FilterChipRow(
-            labels: const ['All Photos', 'Latest', 'Most Popular', 'My Uploads'],
+            labels: const ['All Photos', 'Latest', 'Most Popular', 'My Photos'],
             selectedIndex: _filterIndex,
             onSelected: (i) => setState(() => _filterIndex = i),
           ),
@@ -76,7 +78,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           child: Row(
             children: [
               OutlinedButton(
-                onPressed: () => QrInviteDialog.show(context, joinCode: widget.eventId),
+                onPressed: () =>
+                    QrInviteDialog.show(context, joinCode: widget.eventId),
                 child: const Icon(Icons.qr_code_2),
               ),
               const SizedBox(width: 12),
