@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/attendee/presentation/attendee_camera_screen.dart';
@@ -14,6 +13,7 @@ import '../../features/checkout/presentation/create_event_pricing_screen.dart';
 import '../../features/gallery/presentation/gallery_screen.dart';
 import '../../features/organizer/presentation/organizer_dashboard_screen.dart';
 import '../../features/organizer/presentation/organizer_events_screen.dart';
+import '../../features/organizer/presentation/organizer_profile_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
 import '../../shared/widgets/shell/organizer_shell_scaffold.dart';
 
@@ -95,8 +95,7 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/organizer/profile',
-                  builder: (context, state) =>
-                      const _PlaceholderScreen(title: 'Organizer Profile'),
+                  builder: (context, state) => const OrganizerProfileScreen(),
                 ),
               ],
             ),
@@ -133,20 +132,6 @@ class AppRouter {
           builder: (context, state) => const PhotoReviewScreen(),
         ),
       ],
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(title)),
     );
   }
 }

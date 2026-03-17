@@ -151,7 +151,6 @@ class OrganizerDashboardScreen extends ConsumerWidget {
               onPressed: () => QrInviteDialog.show(
                 context,
                 joinCode: event.joinCode.isEmpty ? 'LOADING' : event.joinCode,
-                onCopyLink: () => Navigator.of(context).pop(),
                 onSaveQr: () => Navigator.of(context).pop(),
               ),
             ),

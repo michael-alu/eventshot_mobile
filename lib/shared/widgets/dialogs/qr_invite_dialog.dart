@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -10,7 +11,6 @@ class QrInviteDialog extends StatelessWidget {
     super.key,
     required this.joinCode,
     this.qrWidget,
-    this.onCopyLink,
     this.onSaveQr,
   });
 
@@ -18,14 +18,12 @@ class QrInviteDialog extends StatelessWidget {
   final String joinCode;
   /// Custom QR widget (e.g. from qr_flutter); if null, a placeholder is shown.
   final Widget? qrWidget;
-  final VoidCallback? onCopyLink;
   final VoidCallback? onSaveQr;
 
   static Future<void> show(
     BuildContext context, {
     required String joinCode,
     Widget? qrWidget,
-    VoidCallback? onCopyLink,
     VoidCallback? onSaveQr,
   }) {
     return showDialog<void>(
@@ -34,10 +32,28 @@ class QrInviteDialog extends StatelessWidget {
       builder: (context) => QrInviteDialog(
         joinCode: joinCode,
         qrWidget: qrWidget,
-        onCopyLink: onCopyLink,
         onSaveQr: onSaveQr,
       ),
     );
+  }
+
+  void _copyLink(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: 'eventshot://join/$joinCode'));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Invite link copied!'),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.green.shade700,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -149,18 +165,17 @@ class QrInviteDialog extends StatelessWidget {
             const SizedBox(height: 24),
             Row(
               children: [
-                if (onCopyLink != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onCopyLink,
-                      icon: const Icon(Icons.content_copy, size: 20),
-                      label: const Text('Copy Link'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _copyLink(context),
+                    icon: const Icon(Icons.content_copy, size: 20),
+                    label: const Text('Copy Link'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                if (onCopyLink != null && onSaveQr != null) const SizedBox(width: 12),
+                ),
+                if (onSaveQr != null) const SizedBox(width: 12),
                 if (onSaveQr != null)
                   Expanded(
                     child: OutlinedButton.icon(

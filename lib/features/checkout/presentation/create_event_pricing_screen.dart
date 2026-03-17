@@ -146,15 +146,25 @@ class _CreateEventPricingScreenState extends ConsumerState<CreateEventPricingScr
               children: List.generate(tiers.length, (index) {
                 final isSelected = tiers[index].id == selectedTierId;
                 return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isSelected ? 24 : 8,
+                  width: isSelected ? 32 : 8,
                   height: 8,
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? Theme.of(context).colorScheme.primary 
                         : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : null,
                   ),
                 );
               }),
