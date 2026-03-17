@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
+import '../../../shared/widgets/buttons/social_auth_buttons.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/inputs/es_text_field.dart';
 import 'providers/auth_providers.dart';
@@ -47,9 +50,7 @@ class _OrganizerSignUpScreenState
       if (mounted) context.go(AppRouter.emailVerification);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        SnackbarHelper.showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -66,9 +67,7 @@ class _OrganizerSignUpScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        SnackbarHelper.showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -127,8 +126,8 @@ class _OrganizerSignUpScreenState
                   controller: _nameController,
                   label: 'Full Name',
                   hint: 'John Doe',
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  textInputAction: TextInputAction.next,
+                  validator: Validators.required,
                 ),
                 const SizedBox(height: 16),
                 EsTextField(
@@ -136,13 +135,8 @@ class _OrganizerSignUpScreenState
                   label: 'Email Address',
                   hint: 'organizer@event.com',
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Required';
-                    if (!v.contains('@') || !v.contains('.')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
+                  textInputAction: TextInputAction.next,
+                  validator: Validators.email,
                 ),
                 const SizedBox(height: 16),
                 EsTextField(
@@ -150,6 +144,8 @@ class _OrganizerSignUpScreenState
                   label: 'Password',
                   hint: '••••••••',
                   obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submit(),
                   suffix: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -159,9 +155,7 @@ class _OrganizerSignUpScreenState
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: (v) => (v == null || v.length < 6)
-                      ? 'At least 6 characters'
-                      : null,
+                  validator: Validators.password,
                 ),
                 const SizedBox(height: 32),
                 PrimaryButton(
@@ -171,58 +165,9 @@ class _OrganizerSignUpScreenState
                 ),
                 const SizedBox(height: 24),
                 // divider
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OR CONTINUE WITH',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // social buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.apple, size: 20),
-                        label: const Text('Apple'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _signInWithGoogle,
-                        icon: const Icon(Icons.mail_outline, size: 20),
-                        label: const Text('Google'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                SocialAuthButtons(
+                  onGooglePressed: _signInWithGoogle,
+                  isLoading: _isLoading,
                 ),
                 const SizedBox(height: 20),
                 // login link
