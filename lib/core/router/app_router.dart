@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/attendee/presentation/attendee_camera_screen.dart';
 import '../../features/attendee/presentation/manual_code_entry_screen.dart';
+import '../../features/attendee/presentation/photo_review_screen.dart';
+import '../../features/attendee/presentation/qr_scanner_screen.dart';
 import '../../features/auth/presentation/email_verification_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/organizer_login_screen.dart';
@@ -36,7 +39,8 @@ class AppRouter {
     return GoRouter(
       initialLocation: welcome,
       redirect: (context, state) {
-        if (state.matchedLocation == '/organizer' || state.matchedLocation == '/organizer/') {
+        if (state.matchedLocation == '/organizer' ||
+            state.matchedLocation == '/organizer/') {
           return organizerDashboard;
         }
         return null;
@@ -100,7 +104,7 @@ class AppRouter {
         ),
         GoRoute(
           path: attendeeScan,
-          builder: (context, state) => const _PlaceholderScreen(title: 'Scan QR'),
+          builder: (context, state) => const QrScannerScreen(),
         ),
         GoRoute(
           path: attendeeManualCode,
@@ -108,7 +112,7 @@ class AppRouter {
         ),
         GoRoute(
           path: attendeeCamera,
-          builder: (context, state) => const _PlaceholderScreen(title: 'Attendee Camera'),
+          builder: (context, state) => const AttendeeCameraScreen(),
         ),
         GoRoute(
           path: '$gallery/:eventId',
@@ -126,7 +130,7 @@ class AppRouter {
         ),
         GoRoute(
           path: photoReview,
-          builder: (context, state) => const _PlaceholderScreen(title: 'Photo Review'),
+          builder: (context, state) => const PhotoReviewScreen(),
         ),
       ],
     );

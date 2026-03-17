@@ -11,7 +11,8 @@ class ManualCodeEntryScreen extends ConsumerStatefulWidget {
   const ManualCodeEntryScreen({super.key});
 
   @override
-  ConsumerState<ManualCodeEntryScreen> createState() => _ManualCodeEntryScreenState();
+  ConsumerState<ManualCodeEntryScreen> createState() =>
+      _ManualCodeEntryScreenState();
 }
 
 class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
@@ -45,16 +46,16 @@ class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
               Text(
                 'Manual Code Entry',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  fontWeight: FontWeight.w700,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
                 'Enter the 6-character code provided by the organizer to access the event gallery.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -65,7 +66,9 @@ class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
               const SizedBox(height: 32),
               PrimaryButton(
                 label: 'Join Event',
-                onPressed: _code.length == 6 && !_isLoading ? () => _onCompleted(_code) : null,
+                onPressed: _code.length == 6 && !_isLoading
+                    ? () => _onCompleted(_code)
+                    : null,
                 isLoading: _isLoading,
               ),
               const SizedBox(height: 24),
