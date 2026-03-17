@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_sizes.dart';
 
@@ -16,6 +17,8 @@ class EsTextField extends StatelessWidget {
     this.onSubmitted,
     this.validator,
     this.suffix,
+    this.inputFormatters,
+    this.focusNode,
     this.autofocus = false,
     this.enabled = true,
   });
@@ -30,6 +33,8 @@ class EsTextField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final String? Function(String?)? validator;
   final Widget? suffix;
+  final List<TextInputFormatter>? inputFormatters;
+  final FocusNode? focusNode;
   final bool autofocus;
   final bool enabled;
 
@@ -52,9 +57,11 @@ class EsTextField extends StatelessWidget {
         ],
         TextFormField(
           controller: controller,
+          focusNode: focusNode,
           obscureText: obscureText,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
+          inputFormatters: inputFormatters,
           onChanged: onChanged,
           onFieldSubmitted: onSubmitted,
           validator: validator,
