@@ -132,7 +132,7 @@ class _OrganizerLoginScreenState
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => context.go(AppRouter.forgotPassword),
+                    onPressed: () => context.push(AppRouter.forgotPassword),
                     child: Text(
                       'Forgot Password?',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -157,7 +157,7 @@ class _OrganizerLoginScreenState
                 const SizedBox(height: 24),
                 // signup link
                 TextButton(
-                  onPressed: () => context.go(AppRouter.organizerSignUp),
+                  onPressed: () => context.pushReplacement(AppRouter.organizerSignUp),
                   child: Text.rich(
                     TextSpan(
                       text: "Don't have an account? ",

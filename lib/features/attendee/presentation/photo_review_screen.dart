@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/router/app_router.dart';
+
 
 class PhotoReviewScreen extends ConsumerWidget {
   const PhotoReviewScreen({super.key});
@@ -78,7 +78,7 @@ class PhotoReviewScreen extends ConsumerWidget {
 
           // Save to Event button
           FilledButton.icon(
-            onPressed: () => context.go(AppRouter.attendeeCamera),
+            onPressed: () => context.pop(),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 56),
@@ -96,7 +96,7 @@ class PhotoReviewScreen extends ConsumerWidget {
 
           // Discard button
           OutlinedButton(
-            onPressed: () => context.go(AppRouter.attendeeCamera),
+            onPressed: () => context.pop(),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 56),
               foregroundColor: Colors.white,

@@ -36,7 +36,7 @@ class OrganizerEventsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               PrimaryButton(
                 label: 'Create Event',
-                onPressed: () => context.go(AppRouter.createEvent),
+                onPressed: () => context.push(AppRouter.createEvent),
                 icon: const Icon(Icons.add, color: Colors.white, size: 22),
               ),
             ],

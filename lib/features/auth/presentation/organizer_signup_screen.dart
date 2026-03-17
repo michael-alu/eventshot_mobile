@@ -47,7 +47,7 @@ class _OrganizerSignUpScreenState
         password: _passwordController.text,
         displayName: _nameController.text.trim(),
       );
-      if (mounted) context.go(AppRouter.emailVerification);
+      if (mounted) context.push(AppRouter.emailVerification);
     } catch (e) {
       if (mounted) {
         SnackbarHelper.showError(context, e.toString());
@@ -172,7 +172,7 @@ class _OrganizerSignUpScreenState
                 const SizedBox(height: 20),
                 // login link
                 TextButton(
-                  onPressed: () => context.go(AppRouter.organizerLogin),
+                  onPressed: () => context.pushReplacement(AppRouter.organizerLogin),
                   child: Text.rich(
                     TextSpan(
                       text: 'Already have an account? ',
