@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Centered title app bar with optional leading back and trailing actions.
 class EsAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -23,11 +24,12 @@ class EsAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canPop = automaticallyImplyLeading && context.canPop();
     final effectiveLeading = leading ??
-        (automaticallyImplyLeading
+        (canPop
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                onPressed: onLeadingPressed ?? () => Navigator.of(context).maybePop(),
+                onPressed: onLeadingPressed ?? () => context.pop(),
               )
             : null);
 

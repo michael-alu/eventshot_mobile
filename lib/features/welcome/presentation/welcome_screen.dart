@@ -81,7 +81,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   ),
                   const Spacer(),
                   FilledButton.icon(
-                    onPressed: () => context.go(AppRouter.organizerSignUp),
+                    onPressed: () => context.push(AppRouter.organizerSignUp),
                     icon: const Icon(Icons.add_circle_outline),
                     label: const Text("I'm Organizing an Event"),
                     style: FilledButton.styleFrom(
@@ -90,7 +90,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   ),
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
-                    onPressed: () => context.go(AppRouter.attendeeScan),
+                    onPressed: () => context.push(AppRouter.attendeeScan),
                     icon: const Icon(Icons.qr_code_scanner),
                     label: const Text("I'm an Attendee"),
                     style: OutlinedButton.styleFrom(

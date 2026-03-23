@@ -58,7 +58,13 @@ class AttendeeCameraScreen extends ConsumerWidget {
           Row(
             children: [
               GestureDetector(
-                onTap: () => context.go(AppRouter.welcome),
+                onTap: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(AppRouter.welcome);
+                  }
+                },
                 child: Container(
                   width: 40,
                   height: 40,
@@ -218,7 +224,13 @@ class AttendeeCameraScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            onPressed: () => context.go(AppRouter.welcome),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRouter.welcome);
+              }
+            },
             icon: const Icon(
               Icons.home_outlined,
               color: Colors.white54,

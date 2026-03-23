@@ -77,7 +77,13 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
         children: [
           _CircleIconButton(
             icon: Icons.close,
-            onTap: () => context.go(AppRouter.welcome),
+            onTap: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRouter.welcome);
+              }
+            },
           ),
           const Expanded(
             child: Text(
@@ -181,7 +187,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: OutlinedButton(
-        onPressed: () => context.go(AppRouter.attendeeManualCode),
+        onPressed: () => context.pushReplacement(AppRouter.attendeeManualCode),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 56),
           foregroundColor: Colors.white,

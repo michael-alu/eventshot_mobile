@@ -133,32 +133,32 @@ class QrInviteDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (var i = 0; i < chars.length; i++) ...[
-                  if (i == 3) const SizedBox(width: 8),
-                  Container(
-                    width: 48,
-                    height: 56,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXl),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.primary,
-                          width: 4,
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.primary,
+                            width: 3,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        chars[i].trim().isEmpty ? '' : chars[i],
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    child: Text(
-                      chars[i].trim().isEmpty ? '' : chars[i],
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ),
-                  if (i < chars.length - 1) const SizedBox(width: 8),
+                  if (i < chars.length - 1)
+                    SizedBox(width: i == 2 ? 10 : 5),
                 ],
               ],
             ),
