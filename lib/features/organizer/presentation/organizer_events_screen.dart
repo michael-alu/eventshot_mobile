@@ -15,7 +15,6 @@ class OrganizerEventsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(organizerEventsProvider);
-    final currentEventId = ref.watch(currentEventIdProvider);
 
     return Scaffold(
       appBar: const EsAppBar(title: 'Events'),
@@ -63,13 +62,10 @@ class OrganizerEventsScreen extends ConsumerWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final event = events[index];
-              final isActive = event.id == currentEventId;
               return _EventCard(
                 event: event,
-                isActive: isActive,
                 onTap: () {
-                  ref.read(currentEventIdProvider.notifier).state = event.id;
-                  context.go(AppRouter.organizerDashboard);
+                  context.push('/organizer/events/${event.id}');
                 },
               );
             },
@@ -81,10 +77,9 @@ class OrganizerEventsScreen extends ConsumerWidget {
 }
 
 class _EventCard extends StatelessWidget {
-  const _EventCard({required this.event, required this.isActive, required this.onTap});
+  const _EventCard({required this.event, required this.onTap});
 
   final Event event;
-  final bool isActive;
   final VoidCallback onTap;
 
   @override
@@ -99,14 +94,10 @@ class _EventCard extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isActive
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.surface,
+          color: theme.colorScheme.surface,
           border: Border.all(
-            color: isActive
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withValues(alpha: 0.2),
-            width: isActive ? 2 : 1,
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -115,12 +106,12 @@ class _EventCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isActive ? theme.colorScheme.primary : theme.colorScheme.primaryContainer,
+                color: theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 Icons.event,
-                color: isActive ? Colors.white : theme.colorScheme.onPrimaryContainer,
+                color: theme.colorScheme.onPrimaryContainer,
                 size: 22,
               ),
             ),
@@ -133,38 +124,19 @@ class _EventCard extends StatelessWidget {
                     event.name,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: isActive ? theme.colorScheme.onPrimaryContainer : null,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     dateStr,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isActive
-                          ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7)
-                          : theme.colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            if (isActive)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Active',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              )
-            else
-              const Icon(Icons.chevron_right),
+            const Icon(Icons.chevron_right),
           ],
         ),
       ),

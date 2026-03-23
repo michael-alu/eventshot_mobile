@@ -15,6 +15,7 @@ import '../../features/checkout/presentation/create_event_pricing_screen.dart';
 import '../../features/gallery/presentation/gallery_screen.dart';
 import '../../features/organizer/presentation/organizer_dashboard_screen.dart';
 import '../../features/organizer/presentation/organizer_events_screen.dart';
+import '../../features/organizer/presentation/event_detail_screen.dart';
 import '../../features/organizer/presentation/organizer_profile_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
 import '../../shared/widgets/shell/organizer_shell_scaffold.dart';
@@ -109,6 +110,15 @@ class AppRouter {
                 GoRoute(
                   path: '/organizer/events',
                   builder: (context, state) => const OrganizerEventsScreen(),
+                  routes: [
+                    GoRoute(
+                      path: ':eventId',
+                      builder: (context, state) {
+                        final eventId = state.pathParameters['eventId']!;
+                        return EventDetailScreen(eventId: eventId);
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -29,3 +29,30 @@ final organizerEventsProvider = StreamProvider<List<Event>>((ref) {
   return repo.getOrganizerEvents(user.id);
 });
 
+class AggregateStats {
+  const AggregateStats({
+    this.totalEvents = 0,
+    this.totalPhotos = 0,
+    this.totalAttendees = 0,
+    this.totalStorageBytes = 0,
+  });
+
+  final int totalEvents;
+  final int totalPhotos;
+  final int totalAttendees;
+  final int totalStorageBytes;
+}
+
+final aggregateStatsProvider = Provider<AggregateStats>((ref) {
+  final eventsList = ref.watch(organizerEventsProvider).valueOrNull ?? [];
+  return eventsList.fold<AggregateStats>(
+    const AggregateStats(),
+    (prev, event) => AggregateStats(
+      totalEvents: prev.totalEvents + 1,
+      totalPhotos: prev.totalPhotos + event.photoCount,
+      totalAttendees: prev.totalAttendees + event.attendeeCount,
+      totalStorageBytes: prev.totalStorageBytes + event.storageBytes,
+    ),
+  );
+});
+
