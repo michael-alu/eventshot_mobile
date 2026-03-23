@@ -18,8 +18,21 @@ class OrganizerDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventId = ref.watch(currentEventIdProvider);
-    final eventAsync = eventId != null
-        ? ref.watch(watchEventProvider(eventId))
+    final eventsAsync = ref.watch(organizerEventsProvider);
+
+    // Auto-select the most recent event if none is selected
+    ref.listen(organizerEventsProvider, (_, next) {
+      final events = next.valueOrNull;
+      if (events != null && events.isNotEmpty && ref.read(currentEventIdProvider) == null) {
+        ref.read(currentEventIdProvider.notifier).state = events.first.id;
+      }
+    });
+
+    final resolvedEventId = eventId ??
+        eventsAsync.valueOrNull?.firstOrNull?.id;
+
+    final eventAsync = resolvedEventId != null
+        ? ref.watch(watchEventProvider(resolvedEventId))
         : const AsyncValue<Event?>.data(null);
 
     return Scaffold(
@@ -27,18 +40,23 @@ class OrganizerDashboardScreen extends ConsumerWidget {
         title: eventAsync.valueOrNull?.name ?? 'Dashboard',
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.go(AppRouter.organizerProfile),
           ),
         ],
       ),
-      body: eventId == null
-          ? _buildEmptyState(context)
-          : eventAsync.when(
-              data: (event) => _buildContent(context, ref, event),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-            ),
+      body: eventsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (events) {
+          if (events.isEmpty) return _buildEmptyState(context);
+          return eventAsync.when(
+            data: (event) => _buildContent(context, ref, event),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          );
+        },
+      ),
       bottomNavigationBar: null,
     );
   }

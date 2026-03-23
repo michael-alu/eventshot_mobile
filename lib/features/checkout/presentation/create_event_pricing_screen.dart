@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
-import '../../../shared/widgets/buttons/primary_button.dart';
+
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/inputs/es_text_field.dart';
 import '../../../shared/widgets/cards/tier_card.dart';
@@ -170,14 +170,32 @@ class _CreateEventPricingScreenState extends ConsumerState<CreateEventPricingScr
               }),
             ),
             const SizedBox(height: 24),
-            PrimaryButton(
-              label: 'Create & Generate QR',
-              icon: const Icon(Icons.qr_code_2, color: Colors.white, size: 22),
-              onPressed: _submit,
-              isLoading: _isLoading,
-            ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 24),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          MediaQuery.of(context).padding.bottom + 12,
+        ),
+        child: FilledButton.icon(
+          onPressed: _isLoading ? null : _submit,
+          icon: _isLoading
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Icons.qr_code_2, size: 20),
+          label: Text(_isLoading ? 'Creating…' : 'Create & Generate QR'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(double.infinity, 52),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
         ),
       ),
     );

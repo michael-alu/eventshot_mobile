@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/attendee/presentation/attendee_camera_screen.dart';
@@ -8,6 +9,7 @@ import '../../features/auth/presentation/email_verification_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/organizer_login_screen.dart';
 import '../../features/auth/presentation/organizer_signup_screen.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
 import '../../features/checkout/presentation/create_event_pricing_screen.dart';
 import '../../features/gallery/presentation/gallery_screen.dart';
@@ -35,14 +37,33 @@ class AppRouter {
   static const String photoReview = '/photo-review';
   static const String createEvent = '/create-event';
 
-  static GoRouter createRouter() {
+  static GoRouter createRouter(Ref ref) {
     return GoRouter(
       initialLocation: welcome,
       redirect: (context, state) {
-        if (state.matchedLocation == '/organizer' ||
-            state.matchedLocation == '/organizer/') {
+        final authState = ref.read(authStateProvider);
+        if (authState.isLoading) return null;
+        
+        final authUser = authState.valueOrNull;
+
+        // Alias for the root organizer route
+        if (state.matchedLocation == '/organizer' || state.matchedLocation == '/organizer/') {
           return organizerDashboard;
         }
+
+        final inAuthFlow = state.matchedLocation == welcome || state.matchedLocation.startsWith('/auth');
+        final inOrganizerFlow = state.matchedLocation.startsWith('/organizer') || state.matchedLocation == createEvent;
+
+        // If authenticated, push away from auth screens
+        if (authUser != null && inAuthFlow) {
+          return organizerDashboard;
+        }
+
+        // If not authenticated, prevent access to organizer screens
+        if (authUser == null && inOrganizerFlow) {
+          return welcome;
+        }
+
         return null;
       },
       routes: [
