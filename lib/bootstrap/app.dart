@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/di/providers.dart';
 import '../core/services/offline_upload_manager.dart';
 import '../core/theme/app_theme.dart';
+import '../core/providers/preferences_provider.dart';
 
 class EventShotApp extends ConsumerWidget {
   const EventShotApp({super.key});
