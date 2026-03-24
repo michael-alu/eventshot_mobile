@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/constants/app_storage_keys.dart';
 import '../../domain/entities/organizer.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/firebase_auth_datasource.dart';
@@ -43,14 +45,34 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String displayName,
+    String role = 'organizer',
   }) async {
-    final cred = await _auth.signUpWithEmail(email: email, password: password);
-    final user = cred.user!;
+    User user;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    if (currentUser != null && currentUser.isAnonymous) {
+      final credential = EmailAuthProvider.credential(email: email, password: password);
+      final cred = await currentUser.linkWithCredential(credential);
+      user = cred.user!;
+    } else {
+      final cred = await _auth.signUpWithEmail(email: email, password: password);
+      user = cred.user!;
+    }
+    
     await user.updateDisplayName(displayName);
+
+    final prefs = await SharedPreferences.getInstance();
+    final lastEventId = prefs.getString(AppStorageKeys.lastEventId);
+    final initialEvents = lastEventId != null && lastEventId.isNotEmpty 
+        ? [lastEventId] 
+        : <String>[];
+
     final model = OrganizerModel(
       id: user.uid,
       email: email,
       displayName: displayName,
+      role: role,
+      joinedEvents: initialEvents,
       createdAt: DateTime.now(),
     );
     await _userRemote.setUser(model);
@@ -75,7 +97,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Organizer?> signInWithGoogle() async {
+  Future<Organizer?> signInWithGoogle({String role = 'organizer'}) async {
     final googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null; // user cancelled
 
@@ -85,20 +107,61 @@ class AuthRepositoryImpl implements AuthRepository {
       idToken: googleAuth.idToken,
     );
 
-    final cred =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+    UserCredential cred;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    try {
+      if (currentUser != null && currentUser.isAnonymous) {
+        cred = await currentUser.linkWithCredential(credential);
+      } else {
+        cred = await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'credential-already-in-use') {
+        cred = await FirebaseAuth.instance.signInWithCredential(credential);
+      } else {
+        rethrow;
+      }
+    }
+    
     final user = cred.user;
     if (user == null) return null;
     var profile = await _userRemote.getUser(user.uid);
+    
+    // Automatically retrieve any active guest event caching to link to account
+    final prefs = await SharedPreferences.getInstance();
+    final lastEventId = prefs.getString(AppStorageKeys.lastEventId);
+    
     if (profile == null) {
+      final initialEvents = lastEventId != null && lastEventId.isNotEmpty 
+          ? [lastEventId] 
+          : <String>[];
+          
       profile = OrganizerModel(
         id: user.uid,
         email: user.email ?? '',
         displayName: user.displayName ?? '',
+        role: role,
+        joinedEvents: initialEvents,
         createdAt: DateTime.now(),
       );
       await _userRemote.setUser(profile);
+    } else {
+      // If profile exists, make sure we append the local cache if not already in joinedEvents
+      if (lastEventId != null && lastEventId.isNotEmpty && !profile.joinedEvents.contains(lastEventId)) {
+        profile = OrganizerModel(
+          id: profile.id,
+          email: profile.email,
+          displayName: profile.displayName,
+          role: profile.role,
+          plan: profile.plan,
+          createdAt: profile.createdAt,
+          joinedEvents: [...profile.joinedEvents, lastEventId],
+        );
+        await _userRemote.setUser(profile);
+      }
     }
+    
     return profile.toEntity();
   }
 

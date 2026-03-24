@@ -8,6 +8,8 @@ class Organizer extends Equatable {
     required this.displayName,
     this.plan,
     this.createdAt,
+    this.role,
+    this.joinedEvents,
   });
 
   final String id;
@@ -15,7 +17,9 @@ class Organizer extends Equatable {
   final String displayName;
   final String? plan;
   final DateTime? createdAt;
+  final String? role;
+  final List<String>? joinedEvents;
 
   @override
-  List<Object?> get props => [id, email, displayName, plan, createdAt];
+  List<Object?> get props => [id, email, displayName, plan, createdAt, role, joinedEvents];
 }
