@@ -95,19 +95,18 @@ class OrganizerProfileScreen extends ConsumerWidget {
                       child: Icon(Icons.dark_mode, size: 20, color: theme.colorScheme.onPrimaryContainer),
                     ),
                     title: const Text('Theme Mode'),
-                    trailing: DropdownButton<String>(
+                    trailing: DropdownButton<ThemeMode>(
                       value: themeMode,
                       borderRadius: BorderRadius.circular(12),
                       underline: const SizedBox(),
                       items: const [
-                        DropdownMenuItem(value: 'system', child: Text('System')),
-                        DropdownMenuItem(value: 'light', child: Text('Light')),
-                        DropdownMenuItem(value: 'dark', child: Text('Dark')),
+                        DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
+                        DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                        DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
                       ],
                       onChanged: (value) {
                         if (value != null) {
-                          ref.read(themeModeProvider.notifier).state = value;
-                          ref.read(themeModePersisterProvider);
+                          ref.read(themeModeProvider.notifier).setThemeMode(value);
                         }
                       },
                     ),

@@ -36,14 +36,14 @@ void main() {
       await tester.pumpWidget(_buildSubject());
       await tester.pumpAndSettle();
 
-      expect(find.text("I'm Organizing an Event"), findsOneWidget);
+      expect(find.text("Sign Up as Organizer"), findsOneWidget);
     });
 
     testWidgets('renders attendee CTA button', (tester) async {
       await tester.pumpWidget(_buildSubject());
       await tester.pumpAndSettle();
 
-      expect(find.text("I'm an Attendee"), findsOneWidget);
+      expect(find.text("Join Event as Guest"), findsOneWidget);
     });
 
     testWidgets('renders tagline text', (tester) async {
@@ -53,13 +53,13 @@ void main() {
       expect(find.text('Memories made together'), findsOneWidget);
     });
 
-    testWidgets('tapping attendee button navigates away from welcome', (
+    testWidgets('tapping organizer button navigates away from welcome', (
       tester,
     ) async {
       await tester.pumpWidget(_buildSubject());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("I'm an Attendee"));
+      await tester.tap(find.text("Sign Up as Organizer"));
       await tester.pumpAndSettle();
 
       // WelcomeScreen should no longer be visible

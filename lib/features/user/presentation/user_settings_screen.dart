@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../../core/providers/preferences_provider.dart';
 
 class UserSettingsScreen extends ConsumerWidget {
   const UserSettingsScreen({super.key});
@@ -48,7 +49,24 @@ class UserSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 40),
           ],
-          
+          ListTile(
+            leading: const Icon(Icons.dark_mode_outlined),
+            title: const Text('App Theme'),
+            trailing: DropdownButton<ThemeMode>(
+              value: ref.watch(themeModeProvider),
+              onChanged: (mode) {
+                if (mode != null) {
+                  ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                }
+              },
+              items: const [
+                DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
+                DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
           OutlinedButton.icon(
             onPressed: () async {
               await ref.read(authRepositoryProvider).signOut();
