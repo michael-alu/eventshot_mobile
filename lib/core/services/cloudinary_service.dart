@@ -47,8 +47,6 @@ class CloudinaryService {
     try {
       final folder = 'eventshot/$eventId/images';
       final credentials = base64Encode(utf8.encode('$_apiKey:$_apiSecret'));
-
-      // Use the Cloudinary Search API to aggregate folder stats
       final searchUrl =
           'https://api.cloudinary.com/v1_1/$_cloudName/resources/search';
 

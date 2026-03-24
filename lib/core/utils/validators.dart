@@ -9,8 +9,6 @@ class Validators {
   static String? email(String? value, [String message = 'Enter a valid email address']) {
     final req = required(value);
     if (req != null) return req;
-
-    // Simple email regex validation
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     if (!emailRegex.hasMatch(value!.trim())) {
       return message;
