@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class CloudinaryService {
   static const String _cloudName = 'dn0uuer1o';
-  static const String _uploadPreset = 'eventshot';
   static const String _apiKey = '431225626468716';
   static const String _apiSecret = 'm3LB1Il7DONG7nanGSraX3q3eGY';
   static const String _uploadUrl =
@@ -17,11 +17,19 @@ class CloudinaryService {
   static Future<String> uploadImage(File imageFile, {required String eventId}) async {
     try {
       final folder = 'eventshot/$eventId/images';
+      final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      
+      final strToSign = 'folder=$folder&timestamp=$timestamp$_apiSecret';
+      final signature = sha1.convert(utf8.encode(strToSign)).toString();
 
       final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl))
-        ..fields['upload_preset'] = _uploadPreset
+        ..fields['api_key'] = _apiKey
         ..fields['folder'] = folder
-        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+        ..fields['timestamp'] = timestamp
+        ..fields['signature'] = signature
+        ..files.add(
+          await http.MultipartFile.fromPath('file', imageFile.path),
+        );
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
@@ -35,6 +43,35 @@ class CloudinaryService {
       }
     } catch (e) {
       debugPrint('CloudinaryService.uploadImage Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Commands Cloudinary to package a specific folder into a .zip and returns a secure download url
+  /// Constructs a synchronously authenticated GET url to natively trigger
+  /// Cloudinary's dynamic zip generator on the physical device's external browser.
+  static String generateArchiveUrl({required String eventId}) {
+    try {
+      final folder = 'eventshot/$eventId/images/';
+      final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      
+      final strToSign = 'mode=download&prefixes=$folder&target_format=zip&timestamp=$timestamp$_apiSecret';
+      final signature = sha1.convert(utf8.encode(strToSign)).toString();
+
+      final baseUrl = 'https://api.cloudinary.com/v1_1/$_cloudName/image/generate_archive';
+      
+      final queryParams = [
+        'api_key=$_apiKey',
+        'timestamp=$timestamp',
+        'signature=$signature',
+        'prefixes=${Uri.encodeComponent(folder)}',
+        'target_format=zip',
+        'mode=download',
+      ].join('&');
+
+      return '$baseUrl?$queryParams';
+    } catch (e) {
+      debugPrint('CloudinaryService.generateArchiveUrl Error: $e');
       rethrow;
     }
   }

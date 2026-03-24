@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-import '../../../shared/widgets/chips/filter_chip_row.dart';
+import '../../../core/services/cloudinary_service.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/leave_event_dialog.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
@@ -21,7 +24,7 @@ class GalleryScreen extends ConsumerStatefulWidget {
 }
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
-  int _filterIndex = 0;
+  bool _isDownloading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,28 +35,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     return Scaffold(
       appBar: EsAppBar(
         title: title,
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Export',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          FilterChipRow(
-            labels: const ['All Photos', 'Latest', 'Most Popular', 'My Photos'],
-            selectedIndex: _filterIndex,
-            onSelected: (i) => setState(() => _filterIndex = i),
-          ),
           Expanded(
             child: ref.watch(galleryPhotosProvider(widget.eventId)).when(
               data: (photos) {
@@ -77,16 +63,24 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ),
                   itemCount: photos.length,
                   itemBuilder: (context, index) {
-                    return Image.network(
-                      photos[index],
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          child: const Center(child: CircularProgressIndicator()),
-                        );
+                    return InkWell(
+                      onTap: () {
+                        context.push('/photo?url=${Uri.encodeComponent(photos[index])}');
                       },
+                      child: Hero(
+                        tag: photos[index],
+                        child: Image.network(
+                          photos[index],
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              child: const Center(child: CircularProgressIndicator()),
+                            );
+                          },
+                        ),
+                      ),
                     );
                   },
                 );
@@ -104,22 +98,39 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             children: [
               OutlinedButton(
                 onPressed: () =>
-                    QrInviteDialog.show(context, joinCode: widget.eventId),
+                    QrInviteDialog.show(context, joinCode: title),
                 child: const Icon(Icons.qr_code_2),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {
-                    final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
-                    if (isAnon) {
-                      LeaveEventDialog.show(context);
-                    } else {
-                      // TODO: Implement actual multiple download functionality
-                    }
-                  },
-                  icon: const Icon(Icons.download),
-                  label: const Text('Download All'),
+                  onPressed: _isDownloading
+                      ? null
+                      : () async {
+                          final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
+                          if (isAnon) {
+                            LeaveEventDialog.show(context);
+                            return;
+                          }
+                          
+                          setState(() => _isDownloading = true);
+                          try {
+                            final String url = CloudinaryService.generateArchiveUrl(eventId: widget.eventId);
+                            await launchUrlString(url, mode: LaunchMode.externalApplication);
+                          } catch (e) {
+                            if (context.mounted) SnackbarHelper.showError(context, e.toString());
+                          } finally {
+                            if (mounted) setState(() => _isDownloading = false);
+                          }
+                        },
+                  icon: _isDownloading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.download),
+                  label: Text(_isDownloading ? 'Archiving...' : 'Download All'),
                 ),
               ),
             ],
