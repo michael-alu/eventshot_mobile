@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -55,13 +56,17 @@ class AppRouter {
         final inAuthFlow = state.matchedLocation == welcome || state.matchedLocation.startsWith('/auth');
         final inOrganizerFlow = state.matchedLocation.startsWith('/organizer') || state.matchedLocation == createEvent;
 
+        final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
+
         // If authenticated, push away from auth screens
         if (authUser != null && inAuthFlow) {
-          return organizerDashboard;
+          if (!isAnon) {
+            return organizerDashboard;
+          }
         }
 
-        // If not authenticated, prevent access to organizer screens
-        if (authUser == null && inOrganizerFlow) {
+        // Prevent anonymous attendees or logged-out users from seeing organizer dashboards
+        if ((authUser == null || isAnon) && inOrganizerFlow) {
           return welcome;
         }
 
