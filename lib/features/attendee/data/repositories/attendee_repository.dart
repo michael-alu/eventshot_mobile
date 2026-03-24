@@ -72,14 +72,16 @@ class AttendeeRepository {
     final uid = _auth.currentUser!.uid;
     final photoId = const Uuid().v4();
     final downloadUrl = await CloudinaryService.uploadImage(photoFile, eventId: eventId);
-    final attendeeRef = _firestore
-        .collection('events')
-        .doc(eventId)
-        .collection('attendees')
-        .doc(uid);
+    
+    final eventRef = _firestore.collection('events').doc(eventId);
+    final eventSnap = await eventRef.get();
+    final isOrganizer = eventSnap.data()?['organizerId'] == uid;
+
+    final attendeeRef = eventRef.collection('attendees').doc(uid);
 
     final attendeeSnap = await attendeeRef.get();
-    final isNewAttendee = !attendeeSnap.exists;
+    // If you are the organizer testing the app, we don't count you as an attendee.
+    final isNewAttendee = !attendeeSnap.exists && !isOrganizer;
 
     final fileLength = await photoFile.length();
 
@@ -89,7 +91,6 @@ class AttendeeRepository {
         .collection('photos')
         .doc(photoId);
 
-    final eventRef = _firestore.collection('events').doc(eventId);
     final batch = _firestore.batch();
     batch.set(photoDocRef, {
       'id': photoId,
