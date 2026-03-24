@@ -44,8 +44,6 @@ class AttendeeRepository {
     data['id'] = doc.id;
 
     final event = EventModel.fromJson(data).toEntity();
-
-    // Block entry once 10 unique attendees have already uploaded
     if (event.attendeeCount >= 10) {
       throw Exception('This event is full. Maximum 10 attendees allowed.');
     }
@@ -73,11 +71,7 @@ class AttendeeRepository {
 
     final uid = _auth.currentUser!.uid;
     final photoId = const Uuid().v4();
-
-    // 1. Upload to Cloudinary (organized folder: eventshot/[eventId]/images)
     final downloadUrl = await CloudinaryService.uploadImage(photoFile, eventId: eventId);
-
-    // 2. Check if this attendee has uploaded before (use their UID as doc ID)
     final attendeeRef = _firestore
         .collection('events')
         .doc(eventId)
@@ -96,27 +90,19 @@ class AttendeeRepository {
         .doc(photoId);
 
     final eventRef = _firestore.collection('events').doc(eventId);
-
-    // 3. Batch write for consistency
     final batch = _firestore.batch();
-
-    // 3a. Register the photo
     batch.set(photoDocRef, {
       'id': photoId,
       'url': downloadUrl,
       'uploadedBy': uid,
       'createdAt': FieldValue.serverTimestamp(),
     });
-
-    // 3b. Register attendee on their very first upload
     if (isNewAttendee) {
       batch.set(attendeeRef, {
         'uid': uid,
         'joinedAt': FieldValue.serverTimestamp(),
       });
     }
-
-    // 3c. Increment event counters
     batch.update(eventRef, {
       'photoCount': FieldValue.increment(1),
       'storageBytes': FieldValue.increment(fileLength),

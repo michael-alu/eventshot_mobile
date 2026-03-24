@@ -29,8 +29,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
   Future<void> _handleBarcode(String rawValue) async {
     if (_isNavigating) return;
-
-    // Support both deep link URLs and raw 6-character codes
     String? code;
     if (rawValue.contains('/join/')) {
       code = rawValue.split('/join/').last.split('?').first;
@@ -71,7 +69,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Main Camera Scanner
           Positioned.fill(
             child: MobileScanner(
               controller: _scannerController,
@@ -83,8 +80,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
               },
             ),
           ),
-
-          // Dark overlay outside scan frame
           Positioned.fill(child: CustomPaint(painter: _ScanOverlayPainter())),
 
           SafeArea(
@@ -167,14 +162,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       height: 280,
       child: Stack(
         children: [
-          // Blue bordered scan frame
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.primary, width: 2.5),
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          // Scanning indicator in bottom-left area
           const Positioned(
             left: 20,
             bottom: 40,
@@ -188,7 +181,6 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
               ),
             ),
           ),
-          // Bottom icons inside frame
           Positioned(
             bottom: 12,
             left: 0,

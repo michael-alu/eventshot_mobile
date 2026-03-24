@@ -27,13 +27,9 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
 
     try {
       final repository = ref.read(attendeeRepositoryProvider);
-      
-      // 1. Instantly validate the 50 limit rule before continuing
       await repository.assertUploadLimit(session.eventId!);
-      
-      // 2. Queue the file directly into physical device storage, instantly freeing the UI
       await ref.read(offlineUploadManagerProvider.notifier).enqueue(session.eventId!, File(session.lastPhotoPath!));
-      
+
       if (!mounted) return;
       ref.read(attendeeSessionProvider.notifier).incrementPhotoCount();
       ref.read(attendeeSessionProvider.notifier).setLastPhotoPath(null);
@@ -58,7 +54,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Photo preview (simulated full-screen)
           Positioned.fill(
             child: Container(
               color: const Color(0xFF1a1a1a),
@@ -78,8 +73,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
               ),
             ),
           ),
-
-          // Zoom icon overlay (top right)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             right: 16,
@@ -93,8 +86,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
               child: const Icon(Icons.zoom_in, color: Colors.white, size: 22),
             ),
           ),
-
-          // Bottom action area
           Positioned(
             bottom: 0,
             left: 0,
@@ -130,8 +121,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Save to Event button
           FilledButton.icon(
             onPressed: _isUploading ? null : _uploadPhoto,
             style: FilledButton.styleFrom(
@@ -154,8 +143,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Discard button
           OutlinedButton(
             onPressed: _isUploading
                 ? null
@@ -177,8 +164,6 @@ class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Premium badge
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
