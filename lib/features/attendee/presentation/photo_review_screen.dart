@@ -1,15 +1,59 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/offline_upload_manager.dart';
+import '../data/repositories/attendee_repository.dart';
+import 'providers/attendee_providers.dart';
 
-
-class PhotoReviewScreen extends ConsumerWidget {
+class PhotoReviewScreen extends ConsumerStatefulWidget {
   const PhotoReviewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PhotoReviewScreen> createState() => _PhotoReviewScreenState();
+}
+
+class _PhotoReviewScreenState extends ConsumerState<PhotoReviewScreen> {
+  bool _isUploading = false;
+
+  Future<void> _uploadPhoto() async {
+    final session = ref.read(attendeeSessionProvider);
+    if (session.lastPhotoPath == null || session.eventId == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final repository = ref.read(attendeeRepositoryProvider);
+      
+      // 1. Instantly validate the 50 limit rule before continuing
+      await repository.assertUploadLimit(session.eventId!);
+      
+      // 2. Queue the file directly into physical device storage, instantly freeing the UI
+      await ref.read(offlineUploadManagerProvider.notifier).enqueue(session.eventId!, File(session.lastPhotoPath!));
+      
+      if (!mounted) return;
+      ref.read(attendeeSessionProvider.notifier).incrementPhotoCount();
+      ref.read(attendeeSessionProvider.notifier).setLastPhotoPath(null);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Photo added to upload queue!')),
+      );
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('UPLOAD ERROR: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload photo. Please try again.')),
+      );
+      setState(() => _isUploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -18,8 +62,19 @@ class PhotoReviewScreen extends ConsumerWidget {
           Positioned.fill(
             child: Container(
               color: const Color(0xFF1a1a1a),
-              child: const Center(
-                child: Icon(Icons.image, size: 100, color: Colors.white12),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final path = ref.watch(attendeeSessionProvider).lastPhotoPath;
+                  if (path != null) {
+                    return Image.file(
+                      File(path),
+                      fit: BoxFit.cover,
+                    );
+                  }
+                  return const Center(
+                    child: Icon(Icons.broken_image, size: 80, color: Colors.white12),
+                  );
+                },
               ),
             ),
           ),
@@ -78,7 +133,7 @@ class PhotoReviewScreen extends ConsumerWidget {
 
           // Save to Event button
           FilledButton.icon(
-            onPressed: () => context.pop(),
+            onPressed: _isUploading ? null : _uploadPhoto,
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 56),
@@ -86,17 +141,28 @@ class PhotoReviewScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            icon: const Icon(Icons.cloud_upload_outlined),
-            label: const Text(
-              'Save to Event',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            icon: _isUploading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Icon(Icons.cloud_upload_outlined),
+            label: Text(
+              _isUploading ? 'Uploading...' : 'Save to Event',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
           ),
           const SizedBox(height: 12),
 
           // Discard button
           OutlinedButton(
-            onPressed: () => context.pop(),
+            onPressed: _isUploading
+                ? null
+                : () {
+                    ref.read(attendeeSessionProvider.notifier).setLastPhotoPath(null);
+                    context.pop();
+                  },
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 56),
               foregroundColor: Colors.white,
