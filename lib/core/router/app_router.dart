@@ -18,6 +18,7 @@ import '../../features/user/presentation/user_settings_screen.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
 import '../../features/checkout/presentation/create_event_pricing_screen.dart';
 import '../../features/gallery/presentation/gallery_screen.dart';
+import '../../features/gallery/presentation/photo_view_screen.dart';
 import '../../features/organizer/presentation/organizer_dashboard_screen.dart';
 import '../../features/organizer/presentation/organizer_events_screen.dart';
 import '../../features/organizer/presentation/event_detail_screen.dart';
@@ -207,6 +208,13 @@ class AppRouter {
         GoRoute(
           path: photoReview,
           builder: (context, state) => const PhotoReviewScreen(),
+        ),
+        GoRoute(
+          path: '/photo',
+          builder: (context, state) {
+            final url = state.uri.queryParameters['url'] ?? '';
+            return PhotoViewScreen(imageUrl: url);
+          },
         ),
       ],
     );

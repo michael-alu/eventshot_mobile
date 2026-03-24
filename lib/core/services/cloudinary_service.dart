@@ -27,7 +27,9 @@ class CloudinaryService {
         ..fields['folder'] = folder
         ..fields['timestamp'] = timestamp
         ..fields['signature'] = signature
-        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+        ..files.add(
+          await http.MultipartFile.fromPath('file', imageFile.path),
+        );
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
@@ -41,6 +43,35 @@ class CloudinaryService {
       }
     } catch (e) {
       debugPrint('CloudinaryService.uploadImage Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Commands Cloudinary to package a specific folder into a .zip and returns a secure download url
+  /// Constructs a synchronously authenticated GET url to natively trigger
+  /// Cloudinary's dynamic zip generator on the physical device's external browser.
+  static String generateArchiveUrl({required String eventId}) {
+    try {
+      final folder = 'eventshot/$eventId/images/';
+      final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      
+      final strToSign = 'mode=download&prefixes=$folder&target_format=zip&timestamp=$timestamp$_apiSecret';
+      final signature = sha1.convert(utf8.encode(strToSign)).toString();
+
+      final baseUrl = 'https://api.cloudinary.com/v1_1/$_cloudName/image/generate_archive';
+      
+      final queryParams = [
+        'api_key=$_apiKey',
+        'timestamp=$timestamp',
+        'signature=$signature',
+        'prefixes=${Uri.encodeComponent(folder)}',
+        'target_format=zip',
+        'mode=download',
+      ].join('&');
+
+      return '$baseUrl?$queryParams';
+    } catch (e) {
+      debugPrint('CloudinaryService.generateArchiveUrl Error: $e');
       rethrow;
     }
   }

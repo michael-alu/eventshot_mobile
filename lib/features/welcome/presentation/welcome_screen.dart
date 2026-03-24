@@ -83,8 +83,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('assets/images/splash.png'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withValues(alpha: 0.65),
+              BlendMode.darken,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -98,19 +109,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                     'EventShot',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                   ),
                   const SizedBox(height: 32),
                   Text(
                     'Memories made together',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'The simplest way to collect and share photos from your event in real-time.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: Colors.white70,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -118,19 +132,47 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   FilledButton.icon(
                     onPressed: () => context.push(AppRouter.organizerSignUp),
                     icon: const Icon(Icons.add_circle_outline),
-                    label: const Text("I'm Organizing an Event"),
+                    label: const Text("Sign Up as Organizer", style: TextStyle(fontSize: 16)),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(double.infinity, 56),
                     ),
                   ),
                   const SizedBox(height: 16),
+                  FilledButton.tonalIcon(
+                    onPressed: () => context.push(AppRouter.attendeeSignUp),
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text("Sign Up as Attendee", style: TextStyle(fontSize: 16)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   _isLoadingAttendee
-                      ? const CircularProgressIndicator()
+                      ? const Center(child: CircularProgressIndicator())
                       : OutlinedButton.icon(
                           onPressed: _joinAsAttendee,
-                          icon: const Icon(Icons.person_add_alt_1),
-                          label: const Text("I'm an Attendee"),
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          label: const Text("Join Event as Guest", style: TextStyle(fontSize: 16)),
                           style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
                             minimumSize: const Size(double.infinity, 56),
                           ),
                         ),
@@ -139,6 +181,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               ),
             ),
           ),
+        ),
         ),
       ),
     );

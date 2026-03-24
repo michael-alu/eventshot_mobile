@@ -61,6 +61,8 @@ dependencies:
   mobile_scanner: ^7.2.0
   http: ^1.6.0
   connectivity_plus: ^7.0.0
+  crypto: ^3.0.7
+  url_launcher: ^6.3.2
   path_provider: ^2.1.5
   crypto: ^3.0.7
 
