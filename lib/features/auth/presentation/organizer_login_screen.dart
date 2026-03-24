@@ -25,7 +25,7 @@ class _OrganizerLoginScreenState
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
+  String? _loadingProvider;
 
   @override
   void dispose() {
@@ -35,8 +35,8 @@ class _OrganizerLoginScreenState
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _isLoading) return;
-    setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate() || _loadingProvider != null) return;
+    setState(() => _loadingProvider = 'email');
     try {
       final repo = ref.read(authRepositoryProvider);
       await repo.signInWithEmail(
@@ -49,12 +49,13 @@ class _OrganizerLoginScreenState
         SnackbarHelper.showError(context, e.toString());
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loadingProvider = null);
     }
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
+    if (_loadingProvider != null) return;
+    setState(() => _loadingProvider = 'google');
     try {
       final repo = ref.read(authRepositoryProvider);
       final user = await repo.signInWithGoogle();
@@ -66,7 +67,7 @@ class _OrganizerLoginScreenState
         SnackbarHelper.showError(context, e.toString());
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loadingProvider = null);
     }
   }
 
@@ -128,7 +129,6 @@ class _OrganizerLoginScreenState
                   ),
                   validator: Validators.required,
                 ),
-                // forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -146,16 +146,14 @@ class _OrganizerLoginScreenState
                 PrimaryButton(
                   label: 'Log In',
                   onPressed: _submit,
-                  isLoading: _isLoading,
+                  isLoading: _loadingProvider == 'email',
                 ),
                 const SizedBox(height: 24),
-                // divider
                 SocialAuthButtons(
                   onGooglePressed: _signInWithGoogle,
-                  isLoading: _isLoading,
+                  isGoogleLoading: _loadingProvider == 'google',
                 ),
                 const SizedBox(height: 24),
-                // signup link
                 TextButton(
                   onPressed: () => context.pushReplacement(AppRouter.organizerSignUp),
                   child: Text.rich(

@@ -54,7 +54,6 @@ class AuthRepositoryImpl implements AuthRepository {
       createdAt: DateTime.now(),
     );
     await _userRemote.setUser(model);
-    // send verification email right after signup
     await _auth.sendEmailVerification();
     return model.toEntity();
   }
@@ -90,8 +89,6 @@ class AuthRepositoryImpl implements AuthRepository {
         await FirebaseAuth.instance.signInWithCredential(credential);
     final user = cred.user;
     if (user == null) return null;
-
-    // check if user profile exists in Firestore, create if not
     var profile = await _userRemote.getUser(user.uid);
     if (profile == null) {
       profile = OrganizerModel(
@@ -103,12 +100,6 @@ class AuthRepositoryImpl implements AuthRepository {
       await _userRemote.setUser(profile);
     }
     return profile.toEntity();
-  }
-
-  @override
-  Future<Organizer?> signInWithApple() async {
-    // TODO: implement with sign_in_with_apple + Firebase signInWithCredential
-    return null;
   }
 
   @override
