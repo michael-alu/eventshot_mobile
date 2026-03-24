@@ -8,8 +8,7 @@ import 'package:camera/camera.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/constants/app_storage_keys.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../shared/widgets/dialogs/leave_event_dialog.dart';
 import 'providers/attendee_providers.dart';
 
 class AttendeeCameraScreen extends ConsumerStatefulWidget {
@@ -78,36 +77,7 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
   }
 
   Future<void> _showLeaveEventDialog(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Leave Event?'),
-        content: const Text(
-          'To access and download these images later, you need an account.\n\n'
-          'Would you like to create one now, or leave anonymously?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove(AppStorageKeys.lastEventId);
-              if (ctx.mounted) ctx.pop();
-              if (context.mounted) context.go(AppRouter.welcome);
-            },
-            child: const Text('Leave Anonymously'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove(AppStorageKeys.lastEventId);
-              if (ctx.mounted) ctx.pop();
-              if (context.mounted) context.push(AppRouter.attendeeSignUp);
-            },
-            child: const Text('Create Account'),
-          ),
-        ],
-      ),
-    );
+    await LeaveEventDialog.show(context);
   }
 
   @override

@@ -11,20 +11,17 @@ class QrInviteDialog extends StatelessWidget {
     super.key,
     required this.joinCode,
     this.qrWidget,
-    this.onSaveQr,
   });
 
   /// 6-character join code to display.
   final String joinCode;
   /// Custom QR widget (e.g. from qr_flutter); if null, a placeholder is shown.
   final Widget? qrWidget;
-  final VoidCallback? onSaveQr;
 
   static Future<void> show(
     BuildContext context, {
     required String joinCode,
     Widget? qrWidget,
-    VoidCallback? onSaveQr,
   }) {
     return showDialog<void>(
       context: context,
@@ -32,7 +29,6 @@ class QrInviteDialog extends StatelessWidget {
       builder: (context) => QrInviteDialog(
         joinCode: joinCode,
         qrWidget: qrWidget,
-        onSaveQr: onSaveQr,
       ),
     );
   }
@@ -46,6 +42,25 @@ class QrInviteDialog extends StatelessWidget {
             Icon(Icons.check_circle, color: Colors.white, size: 20),
             SizedBox(width: 8),
             Text('Invite link copied!'),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.green.shade700,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+    Navigator.of(context).pop();
+  }
+
+  void _copyCode(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: joinCode));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Join code copied!'),
           ],
         ),
         behavior: SnackBarBehavior.floating,
@@ -175,18 +190,17 @@ class QrInviteDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (onSaveQr != null) const SizedBox(width: 12),
-                if (onSaveQr != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onSaveQr,
-                      icon: const Icon(Icons.download, size: 20),
-                      label: const Text('Save QR'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _copyCode(context),
+                    icon: const Icon(Icons.pin, size: 20),
+                    label: const Text('Copy Code'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
+                ),
               ],
             ),
           ],

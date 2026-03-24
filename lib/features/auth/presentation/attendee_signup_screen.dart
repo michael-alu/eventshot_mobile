@@ -43,7 +43,9 @@ class _AttendeeSignUpScreenState extends ConsumerState<AttendeeSignUpScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         displayName: _nameController.text.trim(),
+        role: 'attendee',
       );
+      ref.invalidate(authStateProvider);
       if (mounted) context.push(AppRouter.emailVerification);
     } catch (e) {
       if (mounted) {
@@ -59,10 +61,13 @@ class _AttendeeSignUpScreenState extends ConsumerState<AttendeeSignUpScreen> {
     setState(() => _loadingProvider = 'google');
     try {
       final repo = ref.read(authRepositoryProvider);
-      final user = await repo.signInWithGoogle();
-      if (user != null && mounted) {
-        // Automatically redirects based on app router
-        context.go(AppRouter.welcome); 
+      final user = await repo.signInWithGoogle(role: 'attendee');
+      if (user != null) {
+        ref.invalidate(authStateProvider);
+        if (mounted) {
+          // Automatically redirects based on app router
+          context.go(AppRouter.welcome); 
+        }
       }
     } catch (e) {
       if (mounted) {

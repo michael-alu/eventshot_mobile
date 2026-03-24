@@ -76,7 +76,6 @@ class EventDetailScreen extends ConsumerWidget {
               onPressed: () => QrInviteDialog.show(
                 context,
                 joinCode: event.joinCode.isEmpty ? 'LOADING' : event.joinCode,
-                onSaveQr: () => Navigator.of(context).pop(),
               ),
             ),
           ),

@@ -15,6 +15,7 @@ abstract class AuthRepository {
     required String email,
     required String password,
     required String displayName,
+    String role = 'organizer',
   });
 
   /// Authenticate an existing organizer using email and password.
@@ -29,7 +30,7 @@ abstract class AuthRepository {
   ///
   /// Uses a native modal to prompt the user for their Google account.
   /// If the account does not exist in Firestore, an [Organizer] record is created.
-  Future<Organizer?> signInWithGoogle();
+  Future<Organizer?> signInWithGoogle({String role = 'organizer'});
 
   /// Sends a verification email to the currently logged in user.
   ///

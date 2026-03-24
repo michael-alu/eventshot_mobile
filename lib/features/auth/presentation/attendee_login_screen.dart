@@ -56,9 +56,12 @@ class _AttendeeLoginScreenState
     setState(() => _loadingProvider = 'google');
     try {
       final repo = ref.read(authRepositoryProvider);
-      final user = await repo.signInWithGoogle();
-      if (user != null && mounted) {
-        context.go(AppRouter.welcome);
+      final user = await repo.signInWithGoogle(role: 'attendee');
+      if (user != null) {
+        ref.invalidate(authStateProvider);
+        if (mounted) {
+          context.go(AppRouter.welcome);
+        }
       }
     } catch (e) {
       if (mounted) {
