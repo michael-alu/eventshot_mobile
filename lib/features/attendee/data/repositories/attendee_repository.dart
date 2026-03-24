@@ -65,8 +65,8 @@ class AttendeeRepository {
 
     final photoId = const Uuid().v4();
 
-    // 1. Upload directly to Cloudinary (Bypassing Firebase Storage)
-    final downloadUrl = await CloudinaryService.uploadImage(photoFile);
+    // 1. Upload directly to Cloudinary into organized folder: eventshot/[eventId]/images
+    final downloadUrl = await CloudinaryService.uploadImage(photoFile, eventId: eventId);
 
     // 2. Add document to photos subcollection
     final photoDocRef = _firestore
