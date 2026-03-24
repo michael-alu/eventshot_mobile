@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../../../shared/widgets/chips/filter_chip_row.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';

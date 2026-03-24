@@ -41,14 +41,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Future<void> _submit() async {
     setState(() => _isLoading = true);
-    
-    // Simulate payment processing
     await Future.delayed(const Duration(seconds: 1));
-    
+
     if (mounted) {
-      // Save the last event ID to preferences so the app remembers their context
       ref.read(lastEventIdProvider.notifier).state = widget.eventId;
-      
+
       setState(() => _isLoading = false);
       context.go(AppRouter.organizerDashboard);
     }
@@ -108,7 +105,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
             EsTextField(
-              label: 'Cardholder Name', 
+              label: 'Cardholder Name',
               hint: 'John Doe',
               focusNode: _nameNode,
               textInputAction: TextInputAction.next,
@@ -116,8 +113,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(height: 12),
             EsTextField(
-              label: 'Card Number', 
-              hint: '0000 0000 0000 0000', 
+              label: 'Card Number',
+              hint: '0000 0000 0000 0000',
               keyboardType: TextInputType.number,
               focusNode: _cardNode,
               textInputAction: TextInputAction.next,

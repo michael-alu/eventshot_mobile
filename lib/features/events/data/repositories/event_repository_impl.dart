@@ -19,8 +19,6 @@ class EventRepositoryImpl implements EventRepository {
     required String organizerId,
   }) async {
     final ref = _firestore.collection(_collection).doc();
-    
-    // Set maxPhotos based on Tier (simplified logic for now)
     int maxPhotos = 50; // Free tier default
     if (tierId == 'pro') maxPhotos = 1000;
     if (tierId == 'enterprise') maxPhotos = -1; // unlimited
@@ -73,7 +71,6 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> deleteEvent(String eventId) async {
-    // Note: In a real app, this should also trigger Cloud Functions to cascade delete photos/members
     await _firestore.collection(_collection).doc(eventId).delete();
   }
 

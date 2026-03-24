@@ -36,8 +36,6 @@ class EventDetailScreen extends ConsumerWidget {
 
     final photoCount = event.photoCount.toString();
     final attendeeCount = event.attendeeCount.toString();
-
-    // Live Cloudinary storage stat
     final statsAsync = ref.watch(cloudinaryStatsProvider(eventId));
     final storageLabel = statsAsync.when(
       data: (stats) => '${stats.totalMb.toStringAsFixed(1)} MB',
