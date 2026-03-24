@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/widgets/cards/info_banner.dart';
+
 import '../../../shared/widgets/chips/filter_chip_row.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
+import '../data/providers/gallery_providers.dart';
 
 class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({super.key, required this.eventId, this.eventTitle});
@@ -41,33 +42,51 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InfoBanner(
-            title: 'Images will be deleted in 30 days',
-            subtitle: 'Upgrade to Pro for \$2/mo to keep forever.',
-            actionLabel: 'Upgrade',
-            onAction: () {},
-          ),
+
           FilterChipRow(
             labels: const ['All Photos', 'Latest', 'Most Popular', 'My Photos'],
             selectedIndex: _filterIndex,
             onSelected: (i) => setState(() => _filterIndex = i),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(4),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 2,
-                crossAxisSpacing: 2,
-                childAspectRatio: 1,
-              ),
-              itemCount: 12,
-              itemBuilder: (context, index) {
-                return Container(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  child: const Center(child: Icon(Icons.image)),
+            child: ref.watch(galleryPhotosProvider(widget.eventId)).when(
+              data: (photos) {
+                if (photos.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No photos yet! Grab your camera!',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.all(4),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 2,
+                    crossAxisSpacing: 2,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: photos.length,
+                  itemBuilder: (context, index) {
+                    return Image.network(
+                      photos[index],
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          child: const Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                    );
+                  },
                 );
               },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Error: $err')),
             ),
           ),
         ],
