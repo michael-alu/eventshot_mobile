@@ -10,7 +10,6 @@ class EventShotApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Eagerly awaken the offline upload provider so it gracefully hums in the background
     ref.listen(offlineUploadManagerProvider, (previous, next) {});
 
     final themeMode = ref.watch(themeModeProvider);
