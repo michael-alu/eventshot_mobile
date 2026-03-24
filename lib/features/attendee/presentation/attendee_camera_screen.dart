@@ -1,16 +1,84 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:camera/camera.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import 'providers/attendee_providers.dart';
 
-class AttendeeCameraScreen extends ConsumerWidget {
+class AttendeeCameraScreen extends ConsumerStatefulWidget {
   const AttendeeCameraScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AttendeeCameraScreen> createState() => _AttendeeCameraScreenState();
+}
+
+class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> with WidgetsBindingObserver {
+  CameraController? _controller;
+  bool _isCameraInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) return;
+      
+      final backCamera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+
+      _controller = CameraController(
+        backCamera,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      await _controller!.initialize();
+      if (!mounted) return;
+
+      setState(() => _isCameraInitialized = true);
+
+      // Restore flash state if any
+      final session = ref.read(attendeeSessionProvider);
+      await _controller!.setFlashMode(
+        session.flashOn ? FlashMode.torch : FlashMode.off,
+      );
+    } catch (e) {
+      debugPrint('Camera init error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    
+    if (state == AppLifecycleState.inactive) {
+      _controller?.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _initializeCamera();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(attendeeSessionProvider);
     final notifier = ref.read(attendeeSessionProvider.notifier);
 
@@ -18,13 +86,15 @@ class AttendeeCameraScreen extends ConsumerWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Simulated camera preview (full screen)
+          // Camera preview (full screen)
           Positioned.fill(
             child: Container(
               color: const Color(0xFF1a1a1a),
-              child: const Center(
-                child: Icon(Icons.camera_alt, size: 80, color: Colors.white12),
-              ),
+              child: _isCameraInitialized && _controller != null
+                  ? CameraPreview(_controller!)
+                  : const Center(
+                      child: CircularProgressIndicator(),
+                    ),
             ),
           ),
 
@@ -161,11 +231,18 @@ class AttendeeCameraScreen extends ConsumerWidget {
         children: [
           // Flash toggle
           GestureDetector(
-            onTap: () => notifier.setFlash(!session.flashOn),
+            onTap: () async {
+              if (_controller == null) return;
+              final newFlashState = !session.flashOn;
+              notifier.setFlash(newFlashState);
+              await _controller!.setFlashMode(
+                newFlashState ? FlashMode.torch : FlashMode.off,
+              );
+            },
             child: Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
@@ -179,9 +256,19 @@ class AttendeeCameraScreen extends ConsumerWidget {
 
           // Shutter button
           GestureDetector(
-            onTap: () {
-              notifier.incrementPhotoCount();
-              context.push(AppRouter.photoReview);
+            onTap: () async {
+              if (_controller == null || !_controller!.value.isInitialized) return;
+              if (_controller!.value.isTakingPicture) return;
+
+              try {
+                final file = await _controller!.takePicture();
+                notifier.setLastPhotoPath(file.path);
+                if (context.mounted) {
+                  context.push(AppRouter.photoReview);
+                }
+              } catch (e) {
+                debugPrint('Take picture error: $e');
+              }
             },
             child: Container(
               width: 72,
@@ -205,9 +292,16 @@ class AttendeeCameraScreen extends ConsumerWidget {
                 color: Colors.white24,
               ),
               child: ClipOval(
-                child: session.lastPhotoPath != null
-                    ? Image.asset(session.lastPhotoPath!, fit: BoxFit.cover)
-                    : const Icon(Icons.person, color: Colors.white, size: 28),
+                child: InkWell(
+                  onTap: () {
+                    if (session.eventId != null) {
+                      context.push('${AppRouter.gallery}/${session.eventId}');
+                    }
+                  },
+                  child: session.lastPhotoPath != null
+                      ? Image.file(File(session.lastPhotoPath!), fit: BoxFit.cover)
+                      : const Icon(Icons.person, color: Colors.white, size: 28),
+                ),
               ),
             ),
           ),

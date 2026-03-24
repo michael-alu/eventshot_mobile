@@ -15,23 +15,35 @@ class AttendeeSessionNotifier extends Notifier<AttendeeSession> {
     state = state.copyWith(flashOn: on);
   }
 
+  void setEvent(String id, String name) {
+    state = state.copyWith(eventId: id, eventName: name);
+  }
+
   void setLastPhotoPath(String? path) {
     state = state.copyWith(lastPhotoPath: path);
+  }
+
+  void setPhotosTaken(int count) {
+    state = state.copyWith(photosTaken: count);
   }
 }
 
 class AttendeeSession {
   const AttendeeSession({
-    this.photosTaken = 16,
-    this.photoLimit = 100,
+    this.photosTaken = 0,
+    this.photoLimit = 50,
     this.flashOn = false,
     this.lastPhotoPath,
+    this.eventId,
+    this.eventName,
   });
 
   final int photosTaken;
   final int photoLimit;
   final bool flashOn;
   final String? lastPhotoPath;
+  final String? eventId;
+  final String? eventName;
 
   int get photosRemaining => photoLimit - photosTaken;
 
@@ -40,12 +52,16 @@ class AttendeeSession {
     int? photoLimit,
     bool? flashOn,
     String? lastPhotoPath,
+    String? eventId,
+    String? eventName,
   }) {
     return AttendeeSession(
       photosTaken: photosTaken ?? this.photosTaken,
       photoLimit: photoLimit ?? this.photoLimit,
       flashOn: flashOn ?? this.flashOn,
       lastPhotoPath: lastPhotoPath ?? this.lastPhotoPath,
+      eventId: eventId ?? this.eventId,
+      eventName: eventName ?? this.eventName,
     );
   }
 }
