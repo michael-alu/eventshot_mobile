@@ -73,10 +73,12 @@ class _ConfirmationCodeFieldState extends State<ConfirmationCodeField> {
               controller: _controllers[index],
               focusNode: _focusNodes[index],
               textAlign: TextAlign.center,
-              maxLength: 1,
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.characters,
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]'))],
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                LengthLimitingTextInputFormatter(widget.length),
+              ],
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -99,7 +101,26 @@ class _ConfirmationCodeFieldState extends State<ConfirmationCodeField> {
                 ),
               ),
               onChanged: (value) {
+                if (value.length > 1) {
+                  final pasteChars = value.toUpperCase().split('');
+                  for (var i = 0; i < pasteChars.length; i++) {
+                    final targetIndex = index + i;
+                    if (targetIndex < widget.length) {
+                      _controllers[targetIndex].text = pasteChars[i];
+                    }
+                  }
+                  final nextFocusIndex = index + pasteChars.length;
+                  if (nextFocusIndex < widget.length) {
+                    FocusScope.of(context).requestFocus(_focusNodes[nextFocusIndex]);
+                  } else {
+                    FocusScope.of(context).requestFocus(_focusNodes[widget.length - 1]);
+                  }
+                  _onChanged();
+                  return;
+                }
+
                 if (value.isNotEmpty) {
+                  _controllers[index].text = value.toUpperCase();
                   if (index < widget.length - 1) {
                     FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
                   }
