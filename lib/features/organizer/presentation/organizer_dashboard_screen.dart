@@ -72,7 +72,7 @@ class OrganizerDashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, AggregateStats stats) {
-    final storageGb = (stats.totalStorageBytes / (1024 * 1024 * 1024)).toStringAsFixed(2);
+    final storageMb = (stats.totalSize / (1024 * 1024)).toStringAsFixed(1);
 
     return SingleChildScrollView(
       child: Column(
@@ -96,7 +96,7 @@ class OrganizerDashboardScreen extends ConsumerWidget {
               children: [
                 Expanded(child: StatCard(label: 'Total Attendees', value: '${stats.totalAttendees}')),
                 const SizedBox(width: 16),
-                Expanded(child: StatCard(label: 'Used Storage', value: '$storageGb GB')),
+                Expanded(child: StatCard(label: 'Used Storage', value: '$storageMb MB')),
               ],
             ),
           ),

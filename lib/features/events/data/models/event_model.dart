@@ -15,6 +15,7 @@ class EventModel {
     this.photoCount = 0,
     this.attendeeCount = 0,
     this.storageBytes = 0,
+    this.totalSize = 0,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class EventModel {
   final int photoCount;
   final int attendeeCount;
   final int storageBytes;
+  final int totalSize;
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     return EventModel(
@@ -42,6 +44,7 @@ class EventModel {
       photoCount: json['photoCount'] as int? ?? 0,
       attendeeCount: json['attendeeCount'] as int? ?? 0,
       storageBytes: json['storageBytes'] as int? ?? 0,
+      totalSize: json['totalSize'] as int? ?? 0,
     );
   }
 
@@ -58,6 +61,7 @@ class EventModel {
       'photoCount': photoCount,
       'attendeeCount': attendeeCount,
       'storageBytes': storageBytes,
+      'totalSize': totalSize,
     };
   }
 
@@ -73,6 +77,7 @@ class EventModel {
         photoCount: photoCount,
         attendeeCount: attendeeCount,
         storageBytes: storageBytes,
+        totalSize: totalSize,
       );
 
   /// Generates a random 6-character alphanumeric join code.

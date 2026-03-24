@@ -35,12 +35,14 @@ class AggregateStats {
     this.totalPhotos = 0,
     this.totalAttendees = 0,
     this.totalStorageBytes = 0,
+    this.totalSize = 0,
   });
 
   final int totalEvents;
   final int totalPhotos;
   final int totalAttendees;
   final int totalStorageBytes;
+  final int totalSize;
 }
 
 final aggregateStatsProvider = Provider<AggregateStats>((ref) {
@@ -52,6 +54,7 @@ final aggregateStatsProvider = Provider<AggregateStats>((ref) {
       totalPhotos: prev.totalPhotos + event.photoCount,
       totalAttendees: prev.totalAttendees + event.attendeeCount,
       totalStorageBytes: prev.totalStorageBytes + event.storageBytes,
+      totalSize: prev.totalSize + event.totalSize,
     ),
   );
 });

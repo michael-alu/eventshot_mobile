@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
 import '../../../shared/widgets/cards/section_header.dart';
 import '../../../shared/widgets/cards/stat_card.dart';
@@ -9,6 +8,7 @@ import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
 import '../../events/domain/entities/event.dart';
 import '../../events/presentation/providers/event_providers.dart';
+import '../../gallery/data/providers/gallery_providers.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   const EventDetailScreen({super.key, required this.eventId});
@@ -36,51 +36,20 @@ class EventDetailScreen extends ConsumerWidget {
 
     final photoCount = event.photoCount.toString();
     final attendeeCount = event.attendeeCount.toString();
-    final storageGb = (event.storageBytes / (1024 * 1024 * 1024)).toStringAsFixed(1);
+
+    // Live Cloudinary storage stat
+    final statsAsync = ref.watch(cloudinaryStatsProvider(eventId));
+    final storageLabel = statsAsync.when(
+      data: (stats) => '${stats.totalMb.toStringAsFixed(1)} MB',
+      loading: () => '...',
+      error: (err, stack) => 'N/A',
+    );
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.workspace_premium, color: AppColors.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pro Plan', // Example display
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        Text(
-                          'Unlimited High-Res Uploads',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
-            ),
-          ),
           const SectionHeader(title: 'Event Stats'),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -95,9 +64,12 @@ class EventDetailScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: StatCard(label: 'Storage', value: '$storageGb GB'),
+            child: StatCard(label: 'Storage Used', value: storageLabel),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 8),
+          const SectionHeader(title: 'Event Photos'),
+          _EventPhotoGrid(eventId: eventId),
+          const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: PrimaryButton(
@@ -106,12 +78,75 @@ class EventDetailScreen extends ConsumerWidget {
               onPressed: () => QrInviteDialog.show(
                 context,
                 joinCode: event.joinCode.isEmpty ? 'LOADING' : event.joinCode,
-                onSaveQr: () => Navigator.of(context).pop(), // simplified action
+                onSaveQr: () => Navigator.of(context).pop(),
               ),
             ),
           ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+}
+
+class _EventPhotoGrid extends ConsumerWidget {
+  const _EventPhotoGrid({required this.eventId});
+
+  final String eventId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final photosAsync = ref.watch(galleryPhotosProvider(eventId));
+
+    return photosAsync.when(
+      data: (photos) {
+        if (photos.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: Text(
+                'No photos yet.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          );
+        }
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            childAspectRatio: 1,
+          ),
+          itemCount: photos.length,
+          itemBuilder: (context, index) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                photos[index],
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Could not load photos: $e'),
       ),
     );
   }

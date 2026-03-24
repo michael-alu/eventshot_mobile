@@ -13,6 +13,7 @@ class Event extends Equatable {
     this.photoCount = 0,
     this.attendeeCount = 0,
     this.storageBytes = 0,
+    this.totalSize = 0,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class Event extends Equatable {
   final int photoCount;
   final int attendeeCount;
   final int storageBytes;
+  final int totalSize;
 
   @override
   List<Object?> get props => [
@@ -40,5 +42,6 @@ class Event extends Equatable {
         photoCount,
         attendeeCount,
         storageBytes,
+        totalSize,
       ];
 }
