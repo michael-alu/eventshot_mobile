@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import '../data/repositories/attendee_repository.dart';
+import 'providers/attendee_providers.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -13,8 +16,54 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
+  final MobileScannerController _scannerController = MobileScannerController();
   bool _flashOn = false;
+  bool _isNavigating = false;
   int _bottomIconIndex = 1; // 0=gallery, 1=qr(active), 2=history
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleBarcode(String rawValue) async {
+    if (_isNavigating) return;
+
+    // Support both deep link URLs and raw 6-character codes
+    String? code;
+    if (rawValue.contains('/join/')) {
+      code = rawValue.split('/join/').last.split('?').first;
+    } else if (rawValue.length == 6) {
+      code = rawValue;
+    }
+
+    if (code == null || code.length != 6) return; // not a join code
+
+    setState(() => _isNavigating = true);
+
+    try {
+      final repository = ref.read(attendeeRepositoryProvider);
+      final event = await repository.validateJoinCode(code);
+      if (!mounted) return;
+
+      if (event != null) {
+        ref.read(attendeeSessionProvider.notifier).setEvent(event.id, event.name);
+        context.go(AppRouter.attendeeCamera);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event not found or invalid QR code.')),
+        );
+        setState(() => _isNavigating = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to verify the QR code.')),
+      );
+      setState(() => _isNavigating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,23 +71,16 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Simulated camera background
+          // Main Camera Scanner
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF1a1a2e),
-                    Color(0xFF16213e),
-                    Color(0xFF0f3460),
-                  ],
-                ),
-              ),
-              child: const Center(
-                child: Icon(Icons.camera_alt, size: 80, color: Colors.white12),
-              ),
+            child: MobileScanner(
+              controller: _scannerController,
+              onDetect: (capture) {
+                final barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                  _handleBarcode(barcodes.first.rawValue!);
+                }
+              },
             ),
           ),
 
@@ -98,7 +140,10 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
           ),
           _CircleIconButton(
             icon: _flashOn ? Icons.flash_on : Icons.flash_off,
-            onTap: () => setState(() => _flashOn = !_flashOn),
+            onTap: () {
+              _scannerController.toggleTorch();
+              setState(() => _flashOn = !_flashOn);
+            },
           ),
         ],
       ),
