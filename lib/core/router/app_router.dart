@@ -13,6 +13,8 @@ import '../../features/auth/presentation/organizer_signup_screen.dart';
 import '../../features/auth/presentation/attendee_login_screen.dart';
 import '../../features/auth/presentation/attendee_signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/user/presentation/user_dashboard_screen.dart';
+import '../../features/user/presentation/user_settings_screen.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
 import '../../features/checkout/presentation/create_event_pricing_screen.dart';
 import '../../features/gallery/presentation/gallery_screen.dart';
@@ -22,6 +24,7 @@ import '../../features/organizer/presentation/event_detail_screen.dart';
 import '../../features/organizer/presentation/organizer_profile_screen.dart';
 import '../../features/welcome/presentation/welcome_screen.dart';
 import '../../shared/widgets/shell/organizer_shell_scaffold.dart';
+import '../../shared/widgets/shell/user_shell_scaffold.dart';
 
 /// Central router for EventShot. Expand with shell routes and feature routes.
 class AppRouter {
@@ -31,6 +34,7 @@ class AppRouter {
   static const String attendeeSignUp = '/auth/attendee-signup';
   static const String attendeeLogin = '/auth/attendee-login';
   static const String organizerDashboard = '/organizer/dashboard';
+  static const String userDashboard = '/user/dashboard';
   static const String emailVerification = '/auth/verify-email';
   static const String forgotPassword = '/auth/forgot-password';
   static const String organizerEvents = '/organizer/events';
@@ -57,14 +61,22 @@ class AppRouter {
 
         final inAuthFlow = state.matchedLocation == welcome || state.matchedLocation.startsWith('/auth');
         final inOrganizerFlow = state.matchedLocation.startsWith('/organizer') || state.matchedLocation == createEvent;
+        final inUserFlow = state.matchedLocation.startsWith('/user');
 
         final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
+        
         if (authUser != null && inAuthFlow) {
           if (!isAnon) {
-            return organizerDashboard;
+            return authUser.role == 'attendee' ? userDashboard : organizerDashboard;
           }
         }
-        if ((authUser == null || isAnon) && inOrganizerFlow) {
+        
+        if (authUser != null && !isAnon) {
+          if (authUser.role == 'attendee' && inOrganizerFlow) return userDashboard;
+          if (authUser.role != 'attendee' && inUserFlow) return organizerDashboard;
+        }
+
+        if ((authUser == null || isAnon) && (inOrganizerFlow || inUserFlow)) {
           return welcome;
         }
 
@@ -138,6 +150,29 @@ class AppRouter {
                 GoRoute(
                   path: '/organizer/profile',
                   builder: (context, state) => const OrganizerProfileScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return UserShellScaffold(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/user/dashboard',
+                  builder: (context, state) => const UserDashboardScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/user/settings',
+                  builder: (context, state) => const UserSettingsScreen(),
                 ),
               ],
             ),
