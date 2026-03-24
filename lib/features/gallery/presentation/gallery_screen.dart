@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../shared/widgets/chips/filter_chip_row.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
+import '../../../shared/widgets/dialogs/leave_event_dialog.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
+import '../../events/presentation/providers/event_providers.dart';
 import '../data/providers/gallery_providers.dart';
 
 class GalleryScreen extends ConsumerStatefulWidget {
@@ -21,7 +25,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.eventTitle ?? widget.eventId;
+    final defaultTitle = widget.eventTitle ?? widget.eventId;
+    final eventAsync = ref.watch(watchEventProvider(widget.eventId));
+    final title = eventAsync.valueOrNull?.joinCode ?? defaultTitle;
+
     return Scaffold(
       appBar: EsAppBar(
         title: title,
@@ -103,7 +110,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
+                    if (isAnon) {
+                      LeaveEventDialog.show(context);
+                    } else {
+                      // TODO: Implement actual multiple download functionality
+                    }
+                  },
                   icon: const Icon(Icons.download),
                   label: const Text('Download All'),
                 ),
