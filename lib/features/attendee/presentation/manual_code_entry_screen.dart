@@ -6,6 +6,8 @@ import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/inputs/confirmation_code_field.dart';
+import '../data/repositories/attendee_repository.dart';
+import 'providers/attendee_providers.dart';
 
 class ManualCodeEntryScreen extends ConsumerStatefulWidget {
   const ManualCodeEntryScreen({super.key});
@@ -19,17 +21,35 @@ class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
   String _code = '';
   bool _isLoading = false;
 
-  void _onCompleted(String code) {
+  Future<void> _onCompleted(String code) async {
     setState(() => _code = code);
-    // TODO: validate code and navigate to gallery
     if (code.length == 6) {
+      FocusScope.of(context).unfocus();
       setState(() => _isLoading = true);
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          context.go('${AppRouter.gallery}/$code');
+
+      try {
+        final repository = ref.read(attendeeRepositoryProvider);
+        final event = await repository.validateJoinCode(code);
+        
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        
+        if (event != null) {
+          ref.read(attendeeSessionProvider.notifier).setEvent(event.id, event.name);
+          ref.read(attendeeSessionProvider.notifier).setPhotosTaken(event.photoCount);
+          context.go(AppRouter.attendeeCamera);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid join code. Please try again.')),
+          );
         }
-      });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to verify join code.')),
+        );
+      }
     }
   }
 
@@ -72,11 +92,13 @@ class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
                 isLoading: _isLoading,
               ),
               const SizedBox(height: 24),
+              /*
               TextButton.icon(
                 onPressed: () => context.go(AppRouter.attendeeScan),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('Scan QR Code instead'),
               ),
+              */
             ],
           ),
         ),
