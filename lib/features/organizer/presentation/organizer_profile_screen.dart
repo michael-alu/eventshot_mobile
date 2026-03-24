@@ -62,8 +62,6 @@ class OrganizerProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 48),
-            
-            // Settings Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
@@ -109,7 +107,6 @@ class OrganizerProfileScreen extends ConsumerWidget {
                       onChanged: (value) {
                         if (value != null) {
                           ref.read(themeModeProvider.notifier).state = value;
-                          // Trigger persistence
                           ref.read(themeModePersisterProvider);
                         }
                       },
@@ -130,16 +127,15 @@ class OrganizerProfileScreen extends ConsumerWidget {
                     value: wifiSync,
                     onChanged: (value) {
                       ref.read(wifiSyncModeProvider.notifier).state = value;
-                      // Trigger persistence
                       ref.read(wifiSyncPersisterProvider);
                     },
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(

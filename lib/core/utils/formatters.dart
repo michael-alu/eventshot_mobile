@@ -4,7 +4,7 @@ class CreditCardFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
-    
+
     if (newValue.selection.baseOffset == 0) {
       return newValue;
     }
@@ -30,7 +30,7 @@ class ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
-    
+
     if (newValue.selection.baseOffset == 0) {
       return newValue;
     }

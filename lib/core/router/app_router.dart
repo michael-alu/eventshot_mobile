@@ -10,6 +10,8 @@ import '../../features/auth/presentation/email_verification_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/organizer_login_screen.dart';
 import '../../features/auth/presentation/organizer_signup_screen.dart';
+import '../../features/auth/presentation/attendee_login_screen.dart';
+import '../../features/auth/presentation/attendee_signup_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/checkout/presentation/checkout_screen.dart';
 import '../../features/checkout/presentation/create_event_pricing_screen.dart';
@@ -26,6 +28,8 @@ class AppRouter {
   static const String welcome = '/welcome';
   static const String organizerSignUp = '/auth/organizer-signup';
   static const String organizerLogin = '/auth/organizer-login';
+  static const String attendeeSignUp = '/auth/attendee-signup';
+  static const String attendeeLogin = '/auth/attendee-login';
   static const String organizerDashboard = '/organizer/dashboard';
   static const String emailVerification = '/auth/verify-email';
   static const String forgotPassword = '/auth/forgot-password';
@@ -45,10 +49,8 @@ class AppRouter {
       redirect: (context, state) {
         final authState = ref.read(authStateProvider);
         if (authState.isLoading) return null;
-        
-        final authUser = authState.valueOrNull;
 
-        // Alias for the root organizer route
+        final authUser = authState.valueOrNull;
         if (state.matchedLocation == '/organizer' || state.matchedLocation == '/organizer/') {
           return organizerDashboard;
         }
@@ -57,15 +59,11 @@ class AppRouter {
         final inOrganizerFlow = state.matchedLocation.startsWith('/organizer') || state.matchedLocation == createEvent;
 
         final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
-
-        // If authenticated, push away from auth screens
         if (authUser != null && inAuthFlow) {
           if (!isAnon) {
             return organizerDashboard;
           }
         }
-
-        // Prevent anonymous attendees or logged-out users from seeing organizer dashboards
         if ((authUser == null || isAnon) && inOrganizerFlow) {
           return welcome;
         }
@@ -84,6 +82,14 @@ class AppRouter {
         GoRoute(
           path: organizerLogin,
           builder: (context, state) => const OrganizerLoginScreen(),
+        ),
+        GoRoute(
+          path: attendeeSignUp,
+          builder: (context, state) => const AttendeeSignUpScreen(),
+        ),
+        GoRoute(
+          path: attendeeLogin,
+          builder: (context, state) => const AttendeeLoginScreen(),
         ),
         GoRoute(
           path: emailVerification,

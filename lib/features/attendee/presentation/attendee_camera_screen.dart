@@ -8,6 +8,8 @@ import 'package:camera/camera.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/constants/app_storage_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/attendee_providers.dart';
 
 class AttendeeCameraScreen extends ConsumerStatefulWidget {
@@ -32,7 +34,7 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) return;
-      
+
       final backCamera = cameras.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
@@ -48,8 +50,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
       if (!mounted) return;
 
       setState(() => _isCameraInitialized = true);
-
-      // Restore flash state if any
       final session = ref.read(attendeeSessionProvider);
       await _controller!.setFlashMode(
         session.flashOn ? FlashMode.torch : FlashMode.off,
@@ -69,12 +69,45 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_controller == null || !_controller!.value.isInitialized) return;
-    
+
     if (state == AppLifecycleState.inactive) {
       _controller?.dispose();
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
+  }
+
+  Future<void> _showLeaveEventDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Leave Event?'),
+        content: const Text(
+          'To access and download these images later, you need an account.\n\n'
+          'Would you like to create one now, or leave anonymously?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove(AppStorageKeys.lastEventId);
+              if (ctx.mounted) ctx.pop();
+              if (context.mounted) context.go(AppRouter.welcome);
+            },
+            child: const Text('Leave Anonymously'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove(AppStorageKeys.lastEventId);
+              if (ctx.mounted) ctx.pop();
+              if (context.mounted) context.push(AppRouter.attendeeSignUp);
+            },
+            child: const Text('Create Account'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -86,7 +119,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Camera preview (full screen)
           Positioned.fill(
             child: Container(
               color: const Color(0xFF1a1a1a),
@@ -107,8 +139,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
               ],
             ),
           ),
-
-          // Bottom nav bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -138,11 +168,24 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
                 child: Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white24,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showLeaveEventDialog(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white24,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.logout, color: Colors.white, size: 20),
                 ),
               ),
             ],
@@ -229,7 +272,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Flash toggle
           GestureDetector(
             onTap: () async {
               if (_controller == null) return;
@@ -253,8 +295,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
               ),
             ),
           ),
-
-          // Shutter button
           GestureDetector(
             onTap: () async {
               if (_controller == null || !_controller!.value.isInitialized) return;
@@ -279,8 +319,6 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
               ),
             ),
           ),
-
-          // Gallery preview thumbnail
           GestureDetector(
             onTap: () {},
             child: Container(

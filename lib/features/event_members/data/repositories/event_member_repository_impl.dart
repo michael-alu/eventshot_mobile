@@ -18,7 +18,6 @@ class EventMemberRepositoryImpl implements EventMemberRepository {
     required String joinCode,
     required String attendeeName,
   }) async {
-    // 1. Find the event with this join code
     final eventQuery = await _firestore
         .collection('events')
         .where('joinCode', isEqualTo: joinCode.toUpperCase())
@@ -32,8 +31,6 @@ class EventMemberRepositoryImpl implements EventMemberRepository {
     final eventDoc = eventQuery.docs.first;
     final eventModel =
         EventModel.fromJson({...eventDoc.data(), 'id': eventDoc.id});
-
-    // 2. Create the member record
     final ref = _firestore.collection(_collection).doc();
     final model = EventMemberModel(
       id: ref.id,
@@ -43,8 +40,6 @@ class EventMemberRepositoryImpl implements EventMemberRepository {
     );
 
     await ref.set(model.toJson());
-
-    // 3. Increment the event's attendee count
     await eventDoc.reference.update({
       'attendeeCount': FieldValue.increment(1),
     });
@@ -72,6 +67,5 @@ class EventMemberRepositoryImpl implements EventMemberRepository {
     await _firestore.collection(_collection).doc(memberId).update({
       'isActive': false,
     });
-    // Ideally decrement event attendeeCount via Cloud Function
   }
 }

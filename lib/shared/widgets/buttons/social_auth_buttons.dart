@@ -3,21 +3,19 @@ import 'package:flutter/material.dart';
 class SocialAuthButtons extends StatelessWidget {
   const SocialAuthButtons({
     super.key,
-    this.onApplePressed,
     this.onGooglePressed,
-    this.isLoading = false,
+    this.isGoogleLoading = false,
   });
 
-  final VoidCallback? onApplePressed;
   final VoidCallback? onGooglePressed;
-  final bool isLoading;
+  final bool isGoogleLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     Widget buildIcon(IconData icon) {
-      if (isLoading) {
+      if (isGoogleLoading) {
         return const SizedBox(
           width: 20,
           height: 20,
@@ -26,7 +24,7 @@ class SocialAuthButtons extends StatelessWidget {
       }
       return Icon(icon, size: 20);
     }
-    
+
     return Column(
       children: [
         Row(
@@ -54,36 +52,19 @@ class SocialAuthButtons extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: isLoading ? null : (onApplePressed ?? () {}),
-                icon: buildIcon(Icons.apple),
-                label: const Text('Apple'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: isGoogleLoading ? null : (onGooglePressed ?? () {}),
+            icon: buildIcon(Icons.mail_outline),
+            label: const Text('Google'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: isLoading ? null : (onGooglePressed ?? () {}),
-                icon: buildIcon(Icons.mail_outline),
-                label: const Text('Google'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

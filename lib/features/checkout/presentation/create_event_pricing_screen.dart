@@ -140,7 +140,6 @@ class _CreateEventPricingScreenState extends ConsumerState<CreateEventPricingScr
               ),
             ),
             const SizedBox(height: 16),
-            // Dot Indicators
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(tiers.length, (index) {
@@ -152,8 +151,8 @@ class _CreateEventPricingScreenState extends ConsumerState<CreateEventPricingScr
                   width: isSelected ? 32 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isSelected 
-                        ? Theme.of(context).colorScheme.primary 
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                     boxShadow: isSelected

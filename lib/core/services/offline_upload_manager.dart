@@ -79,8 +79,6 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
   Future<void> enqueue(String eventId, File sourceFile) async {
     final id = const Uuid().v4();
     final ext = sourceFile.path.split('.').last;
-    
-    // Copy the file to a permanent application directory so the OS cache cleanup doesn't delete it
     final appDir = await getApplicationDocumentsDirectory();
     final localPath = '${appDir.path}/pending_$id.$ext';
     await sourceFile.copy(localPath);
@@ -93,8 +91,6 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
 
     state = [...state, job];
     await _saveToPrefs(state);
-    
-    // Try to sync immediately
     _syncQueue();
   }
 
@@ -112,22 +108,16 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
     try {
       while (state.isNotEmpty) {
         final job = state.first;
-
-        // Ensure the file actually still survives on disk
         final file = File(job.localFilePath);
         if (await file.exists()) {
-          // Perform the actual network upload via Repository
           final repo = ref.read(attendeeRepositoryProvider);
           await repo.executeOfflineUpload(job.eventId, file);
           await file.delete();
         }
-
-        // Remove from queue whether it uploaded or the file was missing
         state = state.where((u) => u.id != job.id).toList();
         await _saveToPrefs(state);
       }
     } catch (e) {
-      // Sync failed (e.g., connection drop mid-upload, server 500). Wait for next network trigger.
       debugPrint('SyncQueue Error: $e');
     } finally {
       _isSyncing = false;

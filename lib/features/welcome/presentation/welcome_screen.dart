@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/constants/app_storage_keys.dart';
+import '../../attendee/presentation/providers/attendee_providers.dart';
+import '../../events/data/models/event_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -43,6 +48,36 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  bool _isLoadingAttendee = false;
+
+  Future<void> _joinAsAttendee() async {
+    setState(() => _isLoadingAttendee = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastEventId = prefs.getString(AppStorageKeys.lastEventId);
+
+      if (lastEventId != null && lastEventId.isNotEmpty) {
+        final doc = await FirebaseFirestore.instance.collection('events').doc(lastEventId).get();
+        if (doc.exists) {
+          final data = doc.data()!;
+          data['id'] = doc.id;
+          final event = EventModel.fromJson(data).toEntity();
+
+          ref.read(attendeeSessionProvider.notifier).setEvent(event.id, event.name);
+          ref.read(attendeeSessionProvider.notifier).setPhotosTaken(event.photoCount);
+
+          if (mounted) context.push(AppRouter.attendeeCamera);
+          return;
+        }
+      }
+      if (mounted) context.push(AppRouter.attendeeManualCode);
+    } catch(e) {
+      if (mounted) context.push(AppRouter.attendeeManualCode);
+    } finally {
+      if (mounted) setState(() => _isLoadingAttendee = false);
+    }
   }
 
   @override
@@ -89,14 +124,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(AppRouter.attendeeScan),
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text("I'm an Attendee"),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 56),
-                    ),
-                  ),
+                  _isLoadingAttendee
+                      ? const CircularProgressIndicator()
+                      : OutlinedButton.icon(
+                          onPressed: _joinAsAttendee,
+                          icon: const Icon(Icons.person_add_alt_1),
+                          label: const Text("I'm an Attendee"),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 56),
+                          ),
+                        ),
                   const SizedBox(height: 48),
                 ],
               ),

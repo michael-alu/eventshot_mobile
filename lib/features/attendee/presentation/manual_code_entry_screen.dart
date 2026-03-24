@@ -6,6 +6,8 @@ import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/buttons/primary_button.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/inputs/confirmation_code_field.dart';
+import '../../../core/constants/app_storage_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/repositories/attendee_repository.dart';
 import 'providers/attendee_providers.dart';
 
@@ -30,14 +32,17 @@ class _ManualCodeEntryScreenState extends ConsumerState<ManualCodeEntryScreen> {
       try {
         final repository = ref.read(attendeeRepositoryProvider);
         final event = await repository.validateJoinCode(code);
-        
+
         if (!mounted) return;
         setState(() => _isLoading = false);
-        
+
         if (event != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(AppStorageKeys.lastEventId, event.id);
+
           ref.read(attendeeSessionProvider.notifier).setEvent(event.id, event.name);
           ref.read(attendeeSessionProvider.notifier).setPhotosTaken(event.photoCount);
-          context.go(AppRouter.attendeeCamera);
+          if (mounted) context.go(AppRouter.attendeeCamera);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Invalid join code. Please try again.')),

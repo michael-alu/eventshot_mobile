@@ -6,22 +6,19 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
-import '../../../shared/widgets/buttons/primary_button.dart';
-import '../../../shared/widgets/buttons/social_auth_buttons.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/inputs/es_text_field.dart';
 import 'providers/auth_providers.dart';
 
-class OrganizerSignUpScreen extends ConsumerStatefulWidget {
-  const OrganizerSignUpScreen({super.key});
+class AttendeeSignUpScreen extends ConsumerStatefulWidget {
+  const AttendeeSignUpScreen({super.key});
 
   @override
-  ConsumerState<OrganizerSignUpScreen> createState() =>
-      _OrganizerSignUpScreenState();
+  ConsumerState<AttendeeSignUpScreen> createState() =>
+      _AttendeeSignUpScreenState();
 }
 
-class _OrganizerSignUpScreenState
-    extends ConsumerState<OrganizerSignUpScreen> {
+class _AttendeeSignUpScreenState extends ConsumerState<AttendeeSignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -64,7 +61,8 @@ class _OrganizerSignUpScreenState
       final repo = ref.read(authRepositoryProvider);
       final user = await repo.signInWithGoogle();
       if (user != null && mounted) {
-        context.go(AppRouter.organizerDashboard);
+        // Automatically redirects based on app router
+        context.go(AppRouter.welcome); 
       }
     } catch (e) {
       if (mounted) {
@@ -80,7 +78,7 @@ class _OrganizerSignUpScreenState
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: const EsAppBar(title: 'Sign Up'),
+      appBar: const EsAppBar(title: 'Create Account'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -90,6 +88,7 @@ class _OrganizerSignUpScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 24),
+                // Icon
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(14),
@@ -98,7 +97,7 @@ class _OrganizerSignUpScreenState
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
-                      Icons.qr_code_2,
+                      Icons.person_add_alt_1,
                       size: 40,
                       color: theme.colorScheme.primary,
                     ),
@@ -106,7 +105,7 @@ class _OrganizerSignUpScreenState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Create Organizer Account',
+                  'Join EventShot',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -114,13 +113,72 @@ class _OrganizerSignUpScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Set up your event hub and start capturing memories.',
+                  'Create an account to save, download, and access all your event photos forever.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 32),
+
+                // Primary Google Sign In (Preferred)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _loadingProvider != null ? null : _signInWithGoogle,
+                    icon: _loadingProvider == 'google'
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.mail_outline),
+                    label: const Text('Continue with Google', style: TextStyle(fontSize: 16)),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: theme.colorScheme.primary, // using primary color
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 24),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR CONTINUE WITH EMAIL',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // form fields
                 EsTextField(
                   controller: _nameController,
                   label: 'Full Name',
@@ -132,7 +190,7 @@ class _OrganizerSignUpScreenState
                 EsTextField(
                   controller: _emailController,
                   label: 'Email Address',
-                  hint: 'organizer@event.com',
+                  hint: 'user@email.com',
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   validator: Validators.email,
@@ -157,19 +215,29 @@ class _OrganizerSignUpScreenState
                   validator: Validators.password,
                 ),
                 const SizedBox(height: 32),
-                PrimaryButton(
-                  label: 'Get Started',
+                
+                // Secondary Button for Email
+                OutlinedButton(
                   onPressed: _submit,
-                  isLoading: _loadingProvider == 'email',
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _loadingProvider == 'email' 
+                      ? const SizedBox(
+                          width: 20, 
+                          height: 20, 
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Sign Up with Email', style: TextStyle(fontSize: 16)),
                 ),
-                const SizedBox(height: 24),
-                SocialAuthButtons(
-                  onGooglePressed: _signInWithGoogle,
-                  isGoogleLoading: _loadingProvider == 'google',
-                ),
+
                 const SizedBox(height: 20),
+                // login link
                 TextButton(
-                  onPressed: () => context.pushReplacement(AppRouter.organizerLogin),
+                  onPressed: () => context.pushReplacement(AppRouter.attendeeLogin),
                   child: Text.rich(
                     TextSpan(
                       text: 'Already have an account? ',
@@ -189,6 +257,7 @@ class _OrganizerSignUpScreenState
                   ),
                 ),
                 const SizedBox(height: 16),
+                // terms
                 Text(
                   'By signing up, you agree to our\nTerms of Service and Privacy Policy.',
                   style: theme.textTheme.bodySmall?.copyWith(

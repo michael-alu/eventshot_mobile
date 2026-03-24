@@ -28,17 +28,11 @@ class PhotoRepositoryImpl implements PhotoRepository {
     final photoId = const Uuid().v4();
     final storagePath = 'events/$eventId/photos/$photoId.jpg';
     final storageRef = _storage.ref().child(storagePath);
-
-    // Upload to Firebase Storage
     await storageRef.putFile(
       imageFile,
       SettableMetadata(contentType: 'image/jpeg'),
     );
-
-    // Get the public download URL
     final downloadUrl = await storageRef.getDownloadURL();
-
-    // Save metadata to Firestore
     final model = PhotoModel(
       id: photoId,
       eventId: eventId,
@@ -50,8 +44,6 @@ class PhotoRepositoryImpl implements PhotoRepository {
     );
 
     await _firestore.collection(_collection).doc(photoId).set(model.toJson());
-
-    // Atomically increment the photo count on the event document
     await _firestore.collection('events').doc(eventId).update({
       'photoCount': FieldValue.increment(1),
     });
@@ -76,13 +68,9 @@ class PhotoRepositoryImpl implements PhotoRepository {
 
   @override
   Future<void> deletePhoto(String photoId) async {
-    // Soft delete: keep the file in storage but hide it from the gallery
     await _firestore.collection(_collection).doc(photoId).update({
       'isActive': false,
     });
-    
-    // Note: We'd typically decrement the event.photoCount here too, 
-    // but we'll need the eventId to do that cleanly.
   }
 
   @override

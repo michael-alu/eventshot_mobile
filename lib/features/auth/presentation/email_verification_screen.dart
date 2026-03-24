@@ -26,7 +26,6 @@ class _EmailVerificationScreenState
   @override
   void initState() {
     super.initState();
-    // check every 3 seconds if email is verified
     _timer = Timer.periodic(const Duration(seconds: 3), (_) => _checkVerified());
   }
 
@@ -54,7 +53,6 @@ class _EmailVerificationScreenState
       _canResend = false;
       _cooldown = 30;
     });
-    // 30 second cooldown before allowing resend
     Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
