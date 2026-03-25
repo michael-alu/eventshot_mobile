@@ -61,9 +61,8 @@ class AttendeeRepository {
   }
 
   /// Called by the Background Offline Queue when internet is restored.
-  /// Uploads to Cloudinary, writes Firestore photo doc, increments counters.
-  /// On the very first upload from this device (anonymous UID), also
-  /// registers the attendee and increments attendeeCount.
+  /// This method uploads to Cloudinary, writes the Firestore photo document, and increments counters.
+  /// On the very first upload from this device, it also registers the attendee.
   Future<void> executeOfflineUpload(String eventId, File photoFile) async {
     if (_auth.currentUser == null) {
       await _auth.signInAnonymously();

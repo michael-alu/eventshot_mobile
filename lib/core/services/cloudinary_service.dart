@@ -12,7 +12,7 @@ class CloudinaryService {
       'https://api.cloudinary.com/v1_1/$_cloudName/image/upload';
 
   /// Uploads an image to Cloudinary using an Unsigned Upload Preset.
-  /// Files are organized into eventshot/[eventId]/images/ folder.
+  /// Files are organized into the eventshot/[eventId]/images/ folder.
   /// Returns the permanent 'secure_url' of the uploaded image.
   static Future<String> uploadImage(File imageFile, {required String eventId}) async {
     try {
@@ -47,8 +47,8 @@ class CloudinaryService {
     }
   }
 
-  /// Commands Cloudinary to package a specific folder into a .zip and returns a secure download url
-  /// Constructs a synchronously authenticated GET url to natively trigger
+  /// Commands Cloudinary to package a specific folder into a .zip file and returns a secure download link.
+  /// This constructs a synchronously authenticated GET url to natively trigger
   /// Cloudinary's dynamic zip generator on the physical device's external browser.
   static String generateArchiveUrl({required String eventId}) {
     try {
@@ -123,8 +123,8 @@ class CloudinaryService {
     }
   }
 
-  /// Permanently deletes all remote photos for a specific event 
-  /// by wiping the prefix folder entirely from the Cloudinary bucket via the Admin API.
+  /// Permanently deletes all remote photos for a specific event.
+  /// This wipes the prefix folder entirely from the Cloudinary bucket via the Admin API.
   static Future<void> deleteEventFolder({required String eventId}) async {
     try {
       final prefix = 'eventshot/$eventId/images';
