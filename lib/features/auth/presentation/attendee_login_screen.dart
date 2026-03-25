@@ -118,7 +118,7 @@ class _AttendeeLoginScreenState
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.mail_outline),
+                        : Image.asset('assets/images/google_logo.png', height: 20),
                     label: const Text('Continue with Google', style: TextStyle(fontSize: 16)),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

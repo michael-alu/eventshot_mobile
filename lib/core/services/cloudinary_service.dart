@@ -55,13 +55,14 @@ class CloudinaryService {
       final folder = 'eventshot/$eventId/images/';
       final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
       
-      final strToSign = 'mode=download&prefixes=$folder&target_format=zip&timestamp=$timestamp$_apiSecret';
+      final strToSign = 'flatten_folders=true&mode=download&prefixes=$folder&target_format=zip&timestamp=$timestamp$_apiSecret';
       final signature = sha1.convert(utf8.encode(strToSign)).toString();
 
       final baseUrl = 'https://api.cloudinary.com/v1_1/$_cloudName/image/generate_archive';
       
       final queryParams = [
         'api_key=$_apiKey',
+        'flatten_folders=true',
         'timestamp=$timestamp',
         'signature=$signature',
         'prefixes=${Uri.encodeComponent(folder)}',
@@ -119,6 +120,37 @@ class CloudinaryService {
     } catch (e) {
       debugPrint('CloudinaryService.getFolderStats Error: $e');
       rethrow;
+    }
+  }
+
+  /// Permanently deletes all remote photos for a specific event 
+  /// by wiping the prefix folder entirely from the Cloudinary bucket via the Admin API.
+  static Future<void> deleteEventFolder({required String eventId}) async {
+    try {
+      final prefix = 'eventshot/$eventId/images';
+      final credentials = base64Encode(utf8.encode('$_apiKey:$_apiSecret'));
+      final deleteUrl =
+          'https://api.cloudinary.com/v1_1/$_cloudName/resources/image/upload?prefix=$prefix';
+
+      final response = await http.delete(
+        Uri.parse(deleteUrl),
+        headers: {
+          'Authorization': 'Basic $credentials',
+        },
+      );
+      
+      final folderImagesUrl = 'https://api.cloudinary.com/v1_1/$_cloudName/folders/eventshot/$eventId/images';
+      await http.delete(Uri.parse(folderImagesUrl), headers: {'Authorization': 'Basic $credentials'});
+      
+      final folderEventUrl = 'https://api.cloudinary.com/v1_1/$_cloudName/folders/eventshot/$eventId';
+      await http.delete(Uri.parse(folderEventUrl), headers: {'Authorization': 'Basic $credentials'});
+
+      if (response.statusCode != 200) {
+        final jsonMap = json.decode(response.body);
+        debugPrint('Cloudinary Delete Failed: ${jsonMap['error']}');
+      }
+    } catch (e) {
+      debugPrint('CloudinaryService.deleteEventFolder Error: $e');
     }
   }
 }

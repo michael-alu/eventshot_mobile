@@ -100,7 +100,9 @@ class AttendeeRepository {
     });
     if (isNewAttendee) {
       batch.set(attendeeRef, {
-        'uid': uid,
+        'id': uid,
+        'name': _auth.currentUser?.displayName ?? 'Attendee',
+        'photoCount': 0,
         'joinedAt': FieldValue.serverTimestamp(),
       });
     }

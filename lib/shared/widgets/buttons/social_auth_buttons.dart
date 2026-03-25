@@ -14,17 +14,6 @@ class SocialAuthButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    Widget buildIcon(IconData icon) {
-      if (isGoogleLoading) {
-        return const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        );
-      }
-      return Icon(icon, size: 20);
-    }
-
     return Column(
       children: [
         Row(
@@ -56,7 +45,13 @@ class SocialAuthButtons extends StatelessWidget {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: isGoogleLoading ? null : (onGooglePressed ?? () {}),
-            icon: buildIcon(Icons.mail_outline),
+            icon: isGoogleLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Image.asset('assets/images/google_logo.png', height: 20),
             label: const Text('Google'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),

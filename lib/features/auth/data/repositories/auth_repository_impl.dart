@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,16 +64,26 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final prefs = await SharedPreferences.getInstance();
     final lastEventId = prefs.getString(AppStorageKeys.lastEventId);
-    final initialEvents = lastEventId != null && lastEventId.isNotEmpty 
-        ? [lastEventId] 
-        : <String>[];
+
+    if (lastEventId != null && lastEventId.isNotEmpty) {
+       await FirebaseFirestore.instance
+           .collection('events')
+           .doc(lastEventId)
+           .collection('attendees')
+           .doc(user.uid)
+           .set({
+             'id': user.uid,
+             'name': displayName,
+             'photoCount': 0,
+             'joinedAt': FieldValue.serverTimestamp(),
+       }, SetOptions(merge: true));
+    }
 
     final model = OrganizerModel(
       id: user.uid,
       email: email,
       displayName: displayName,
       role: role,
-      joinedEvents: initialEvents,
       createdAt: DateTime.now(),
     );
     await _userRemote.setUser(model);
@@ -132,34 +143,29 @@ class AuthRepositoryImpl implements AuthRepository {
     final prefs = await SharedPreferences.getInstance();
     final lastEventId = prefs.getString(AppStorageKeys.lastEventId);
     
+    if (lastEventId != null && lastEventId.isNotEmpty) {
+       await FirebaseFirestore.instance
+           .collection('events')
+           .doc(lastEventId)
+           .collection('attendees')
+           .doc(user.uid)
+           .set({
+             'id': user.uid,
+             'name': user.displayName ?? 'Attendee',
+             'photoCount': 0,
+             'joinedAt': FieldValue.serverTimestamp(),
+       }, SetOptions(merge: true));
+    }
+    
     if (profile == null) {
-      final initialEvents = lastEventId != null && lastEventId.isNotEmpty 
-          ? [lastEventId] 
-          : <String>[];
-          
       profile = OrganizerModel(
         id: user.uid,
         email: user.email ?? '',
         displayName: user.displayName ?? '',
         role: role,
-        joinedEvents: initialEvents,
         createdAt: DateTime.now(),
       );
       await _userRemote.setUser(profile);
-    } else {
-      // If profile exists, make sure we append the local cache if not already in joinedEvents
-      if (lastEventId != null && lastEventId.isNotEmpty && !profile.joinedEvents.contains(lastEventId)) {
-        profile = OrganizerModel(
-          id: profile.id,
-          email: profile.email,
-          displayName: profile.displayName,
-          role: profile.role,
-          plan: profile.plan,
-          createdAt: profile.createdAt,
-          joinedEvents: [...profile.joinedEvents, lastEventId],
-        );
-        await _userRemote.setUser(profile);
-      }
     }
     
     return profile.toEntity();

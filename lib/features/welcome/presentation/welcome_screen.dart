@@ -70,6 +70,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
           if (mounted) context.push(AppRouter.attendeeCamera);
           return;
+        } else {
+          await prefs.remove(AppStorageKeys.lastEventId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('This event has been deleted by the organizer.')),
+            );
+          }
         }
       }
       if (mounted) context.push(AppRouter.attendeeManualCode);

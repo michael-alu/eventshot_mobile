@@ -5,8 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:camera/camera.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_storage_keys.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/dialogs/leave_event_dialog.dart';
 import 'providers/attendee_providers.dart';
@@ -80,6 +83,15 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
     await LeaveEventDialog.show(context);
   }
 
+  /// Clears the cached event ID for logged-in attendees on exit.
+  Future<void> _clearCacheIfLoggedIn() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && !user.isAnonymous) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(AppStorageKeys.lastEventId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(attendeeSessionProvider);
@@ -128,7 +140,9 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
           Row(
             children: [
               GestureDetector(
-                onTap: () {
+                onTap: () async {
+                  await _clearCacheIfLoggedIn();
+                  if (!context.mounted) return;
                   if (context.canPop()) {
                     context.pop();
                   } else {
@@ -326,7 +340,9 @@ class _AttendeeCameraScreenState extends ConsumerState<AttendeeCameraScreen> wit
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            onPressed: () {
+            onPressed: () async {
+              await _clearCacheIfLoggedIn();
+              if (!context.mounted) return;
               if (context.canPop()) {
                 context.pop();
               } else {

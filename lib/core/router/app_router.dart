@@ -195,7 +195,8 @@ class AppRouter {
           path: '$gallery/:eventId',
           builder: (context, state) {
             final eventId = state.pathParameters['eventId'] ?? '';
-            return GalleryScreen(eventId: eventId);
+            final from = state.uri.queryParameters['from'];
+            return GalleryScreen(eventId: eventId, showTakePictures: from == 'dashboard');
           },
         ),
         GoRoute(

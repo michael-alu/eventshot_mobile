@@ -9,7 +9,6 @@ class OrganizerModel {
     this.role = 'organizer',
     this.plan,
     this.createdAt,
-    this.joinedEvents = const [],
   });
 
   final String id;
@@ -18,7 +17,6 @@ class OrganizerModel {
   final String role;
   final String? plan;
   final DateTime? createdAt;
-  final List<String> joinedEvents;
 
   factory OrganizerModel.fromJson(Map<String, dynamic> json) {
     return OrganizerModel(
@@ -30,7 +28,6 @@ class OrganizerModel {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
-      joinedEvents: List<String>.from(json['joinedEvents'] ?? []),
     );
   }
 
@@ -42,7 +39,6 @@ class OrganizerModel {
       'role': role,
       if (plan != null) 'plan': plan,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
-      'joinedEvents': joinedEvents,
     };
   }
 
@@ -54,7 +50,6 @@ class OrganizerModel {
       plan: plan,
       createdAt: createdAt,
       role: role,
-      joinedEvents: joinedEvents,
     );
   }
 
@@ -66,7 +61,6 @@ class OrganizerModel {
       plan: e.plan,
       createdAt: e.createdAt,
       role: e.role ?? 'organizer',
-      joinedEvents: e.joinedEvents ?? const [],
     );
   }
 }

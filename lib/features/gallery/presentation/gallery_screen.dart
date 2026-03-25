@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/services/cloudinary_service.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
@@ -13,11 +14,14 @@ import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
 import '../../events/presentation/providers/event_providers.dart';
 import '../data/providers/gallery_providers.dart';
 
+enum _PhotoFilter { all, mine, others }
+
 class GalleryScreen extends ConsumerStatefulWidget {
-  const GalleryScreen({super.key, required this.eventId, this.eventTitle});
+  const GalleryScreen({super.key, required this.eventId, this.eventTitle, this.showTakePictures = false});
 
   final String eventId;
   final String? eventTitle;
+  final bool showTakePictures;
 
   @override
   ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
@@ -25,6 +29,7 @@ class GalleryScreen extends ConsumerStatefulWidget {
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   bool _isDownloading = false;
+  _PhotoFilter _filter = _PhotoFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -32,21 +37,52 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final eventAsync = ref.watch(watchEventProvider(widget.eventId));
     final title = eventAsync.valueOrNull?.joinCode ?? defaultTitle;
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final uid = currentUser?.uid;
+    final isLoggedIn = currentUser != null && !(currentUser.isAnonymous);
+    final canTakePictures = isLoggedIn && widget.showTakePictures;
+
     return Scaffold(
       appBar: EsAppBar(
         title: title,
+        actions: [
+          IconButton(
+            onPressed: () => QrInviteDialog.show(context, joinCode: title),
+            icon: const Icon(Icons.qr_code_2),
+            tooltip: 'Share Event Code',
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Filter chips
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                _buildChip('All Photos', _PhotoFilter.all),
+                const SizedBox(width: 8),
+                _buildChip('My Photos', _PhotoFilter.mine),
+                const SizedBox(width: 8),
+                _buildChip("Others' Photos", _PhotoFilter.others),
+              ],
+            ),
+          ),
 
           Expanded(
-            child: ref.watch(galleryPhotosProvider(widget.eventId)).when(
-              data: (photos) {
+            child: ref.watch(galleryPhotoDocsProvider(widget.eventId)).when(
+              data: (allPhotos) {
+                final photos = _applyFilter(allPhotos, uid);
                 if (photos.isEmpty) {
+                  final message = _filter == _PhotoFilter.all
+                      ? 'No photos yet! Grab your camera!'
+                      : _filter == _PhotoFilter.mine
+                          ? 'You haven\'t taken any photos yet.'
+                          : 'No photos from others yet.';
                   return Center(
                     child: Text(
-                      'No photos yet! Grab your camera!',
+                      message,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -63,14 +99,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   ),
                   itemCount: photos.length,
                   itemBuilder: (context, index) {
+                    final url = photos[index]['url'] as String;
                     return InkWell(
                       onTap: () {
-                        context.push('/photo?url=${Uri.encodeComponent(photos[index])}');
+                        context.push('/photo?url=${Uri.encodeComponent(url)}');
                       },
                       child: Hero(
-                        tag: photos[index],
+                        tag: url,
                         child: Image.network(
-                          photos[index],
+                          url,
                           fit: BoxFit.cover,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
@@ -93,44 +130,52 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              OutlinedButton(
-                onPressed: () =>
-                    QrInviteDialog.show(context, joinCode: title),
-                child: const Icon(Icons.qr_code_2),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _isDownloading
-                      ? null
-                      : () async {
-                          final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
-                          if (isAnon) {
-                            LeaveEventDialog.show(context);
-                            return;
-                          }
-                          
-                          setState(() => _isDownloading = true);
-                          try {
-                            final String url = CloudinaryService.generateArchiveUrl(eventId: widget.eventId);
-                            await launchUrlString(url, mode: LaunchMode.externalApplication);
-                          } catch (e) {
-                            if (context.mounted) SnackbarHelper.showError(context, e.toString());
-                          } finally {
-                            if (mounted) setState(() => _isDownloading = false);
-                          }
-                        },
-                  icon: _isDownloading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.download),
-                  label: Text(_isDownloading ? 'Archiving...' : 'Download All'),
+              if (canTakePictures) ...[
+                FilledButton.tonalIcon(
+                  onPressed: () => context.push(AppRouter.attendeeCamera),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Take More Pictures'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              FilledButton.icon(
+                onPressed: _isDownloading
+                    ? null
+                    : () async {
+                        final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
+                        if (isAnon) {
+                          LeaveEventDialog.show(context);
+                          return;
+                        }
+                        
+                        setState(() => _isDownloading = true);
+                        try {
+                          final String url = CloudinaryService.generateArchiveUrl(eventId: widget.eventId);
+                          await launchUrlString(url, mode: LaunchMode.externalApplication);
+                        } catch (e) {
+                          if (context.mounted) SnackbarHelper.showError(context, e.toString());
+                        } finally {
+                          if (mounted) setState(() => _isDownloading = false);
+                        }
+                      },
+                icon: _isDownloading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.download),
+                label: Text(_isDownloading ? 'Archiving...' : 'Download All'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ],
@@ -139,4 +184,24 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       ),
     );
   }
+
+  Widget _buildChip(String label, _PhotoFilter filter) {
+    final isSelected = _filter == filter;
+    return FilterChip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      selected: isSelected,
+      onSelected: (_) => setState(() => _filter = filter),
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
+  List<Map<String, dynamic>> _applyFilter(List<Map<String, dynamic>> photos, String? uid) {
+    if (_filter == _PhotoFilter.all || uid == null) return photos;
+    if (_filter == _PhotoFilter.mine) {
+      return photos.where((p) => p['uploadedBy'] == uid).toList();
+    }
+    return photos.where((p) => p['uploadedBy'] != uid).toList();
+  }
 }
+

@@ -6,6 +6,8 @@ import '../../../shared/widgets/cards/section_header.dart';
 import '../../../shared/widgets/cards/stat_card.dart';
 import '../../../shared/widgets/chrome/es_app_bar.dart';
 import '../../../shared/widgets/dialogs/qr_invite_dialog.dart';
+import '../../../shared/widgets/dialogs/edit_event_dialog.dart';
+import 'package:go_router/go_router.dart';
 import '../../events/domain/entities/event.dart';
 import '../../events/presentation/providers/event_providers.dart';
 import '../../gallery/data/providers/gallery_providers.dart';
@@ -22,6 +24,46 @@ class EventDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: EsAppBar(
         title: eventAsync.valueOrNull?.name ?? 'Event Details',
+        actions: [
+          if (eventAsync.valueOrNull != null)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                final ev = eventAsync.valueOrNull!;
+                if (value == 'edit') {
+                  EditEventDialog.show(context, ev);
+                } else if (value == 'delete') {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (c) => AlertDialog(
+                      title: const Text('Delete Event?'),
+                      content: const Text('This will permanently delete the event and all associated photos. This action cannot be undone.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                        FilledButton(
+                          style: FilledButton.styleFrom(backgroundColor: Theme.of(c).colorScheme.error),
+                          onPressed: () => Navigator.pop(c, true), 
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await ref.read(eventRepositoryProvider).deleteEvent(eventId);
+                    if (context.mounted) {
+                      context.pop();
+                    }
+                  }
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'edit', child: Text('Edit Event')),
+                PopupMenuItem(
+                  value: 'delete', 
+                  child: Text('Delete Event', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                ),
+              ],
+            ),
+        ],
       ),
       body: eventAsync.when(
         data: (event) => _buildContent(context, ref, event),

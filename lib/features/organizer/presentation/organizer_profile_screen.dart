@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,7 +18,7 @@ class OrganizerProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final user = ref.watch(authStateProvider).valueOrNull;
     final themeMode = ref.watch(themeModeProvider);
-    final wifiSync = ref.watch(wifiSyncModeProvider);
+    final authUser = FirebaseAuth.instance.currentUser;
 
     final name = user?.displayName ?? 'Organizer';
     final email = user?.email ?? '';
@@ -32,6 +33,38 @@ class OrganizerProfileScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
+            if (authUser != null && !authUser.emailVerified && authUser.email != null) ...[
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXl),
+                  border: Border.all(color: theme.colorScheme.error),
+                ),
+                child: ListTile(
+                  leading: Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                  title: const Text('Email Not Verified'),
+                  subtitle: const Text('Tap to resend verification link.'),
+                  onTap: () async {
+                    try {
+                      await authUser.sendEmailVerification();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Verification email sent!')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to send verification link.')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             Center(
               child: CircleAvatar(
                 radius: 48,
@@ -46,12 +79,21 @@ class OrganizerProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              name,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (authUser != null && authUser.emailVerified) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.verified, color: AppColors.primary, size: 22),
+                ]
+              ],
             ),
             const SizedBox(height: 4),
             Text(
@@ -110,24 +152,6 @@ class OrganizerProfileScreen extends ConsumerWidget {
                         }
                       },
                     ),
-                  ),
-                  Divider(height: 1, indent: 56, endIndent: 16, color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-                  SwitchListTile(
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.wifi, size: 20, color: theme.colorScheme.onTertiaryContainer),
-                    ),
-                    title: const Text('Wi-Fi Sync Only'),
-                    subtitle: const Text('Upload photos only when connected to Wi-Fi'),
-                    value: wifiSync,
-                    onChanged: (value) {
-                      ref.read(wifiSyncModeProvider.notifier).state = value;
-                      ref.read(wifiSyncPersisterProvider);
-                    },
                   ),
                 ],
               ),

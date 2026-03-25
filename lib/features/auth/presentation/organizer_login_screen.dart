@@ -39,11 +39,20 @@ class _OrganizerLoginScreenState
     setState(() => _loadingProvider = 'email');
     try {
       final repo = ref.read(authRepositoryProvider);
-      await repo.signInWithEmail(
+      final org = await repo.signInWithEmail(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      if (mounted) context.go(AppRouter.organizerDashboard);
+      if (mounted) {
+        if (org.role == 'attendee') {
+          await repo.signOut();
+          if (!mounted) return;
+          SnackbarHelper.showError(context, 'You have an Attendee account! Please log in as an Attendee.');
+          context.go(AppRouter.attendeeLogin);
+        } else {
+          context.go(AppRouter.organizerDashboard);
+        }
+      }
     } catch (e) {
       if (mounted) {
         SnackbarHelper.showError(context, e.toString());
@@ -60,7 +69,14 @@ class _OrganizerLoginScreenState
       final repo = ref.read(authRepositoryProvider);
       final user = await repo.signInWithGoogle();
       if (user != null && mounted) {
-        context.go(AppRouter.organizerDashboard);
+        if (user.role == 'attendee') {
+          await repo.signOut();
+          if (!mounted) return;
+          SnackbarHelper.showError(context, 'You have an Attendee account! Please log in as an Attendee.');
+          context.go(AppRouter.attendeeLogin);
+        } else {
+          context.go(AppRouter.organizerDashboard);
+        }
       }
     } catch (e) {
       if (mounted) {
