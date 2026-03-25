@@ -51,11 +51,14 @@ class AuthRepositoryImpl implements AuthRepository {
     User user;
     final currentUser = FirebaseAuth.instance.currentUser;
     
+    // If the user is currently anonymous (like a guest attendee), we upgrade their account
+    // by linking the new email credential to their existing anonymous session.
     if (currentUser != null && currentUser.isAnonymous) {
       final credential = EmailAuthProvider.credential(email: email, password: password);
       final cred = await currentUser.linkWithCredential(credential);
       user = cred.user!;
     } else {
+      // Otherwise, just create a brand new email user
       final cred = await _auth.signUpWithEmail(email: email, password: password);
       user = cred.user!;
     }
@@ -122,12 +125,14 @@ class AuthRepositoryImpl implements AuthRepository {
     final currentUser = FirebaseAuth.instance.currentUser;
     
     try {
+      // If they are an anonymous guest, upgrade them by linking the Google credential
       if (currentUser != null && currentUser.isAnonymous) {
         cred = await currentUser.linkWithCredential(credential);
       } else {
         cred = await FirebaseAuth.instance.signInWithCredential(credential);
       }
     } on FirebaseAuthException catch (e) {
+      // If the Google account is already tied to another user, just log them into that account
       if (e.code == 'credential-already-in-use') {
         cred = await FirebaseAuth.instance.signInWithCredential(credential);
       } else {

@@ -73,7 +73,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
           Expanded(
             child: ref.watch(galleryPhotoDocsProvider(widget.eventId)).when(
               data: (allPhotos) {
+                // Apply the selected filter chip logic to the raw photo list
                 final photos = _applyFilter(allPhotos, uid);
+                
                 if (photos.isEmpty) {
                   final message = _filter == _PhotoFilter.all
                       ? 'No photos yet! Grab your camera!'
@@ -197,10 +199,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   }
 
   List<Map<String, dynamic>> _applyFilter(List<Map<String, dynamic>> photos, String? uid) {
+    // If "All Photos" is selected or user is not logged in, return everything
     if (_filter == _PhotoFilter.all || uid == null) return photos;
+    
+    // Filter to only show photos uploaded by the current user
     if (_filter == _PhotoFilter.mine) {
       return photos.where((p) => p['uploadedBy'] == uid).toList();
     }
+    
+    // Filter to only show photos uploaded by everyone else
     return photos.where((p) => p['uploadedBy'] != uid).toList();
   }
 }

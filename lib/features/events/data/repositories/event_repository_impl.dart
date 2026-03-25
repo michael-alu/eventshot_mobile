@@ -19,10 +19,13 @@ class EventRepositoryImpl implements EventRepository {
     required String tierId,
     required String organizerId,
   }) async {
+    // Generate a new document reference so we can get its ID
     final ref = _firestore.collection(_collection).doc();
-    int maxPhotos = 50; // Free tier default
+    
+    // Set default photo limits based on the selected pricing tier
+    int maxPhotos = 50;
     if (tierId == 'pro') maxPhotos = 1000;
-    if (tierId == 'enterprise') maxPhotos = -1; // unlimited
+    if (tierId == 'enterprise') maxPhotos = -1; // -1 means unlimited photos
 
     final model = EventModel(
       id: ref.id,
@@ -54,6 +57,7 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> updateEvent(Event event) async {
+    // Convert the Event entity back to a model so we can save it to Firestore
     final model = EventModel(
       id: event.id,
       name: event.name,
@@ -72,22 +76,22 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> deleteEvent(String eventId) async {
-    // 1. Permanently wipe all associated images from the Cloudinary hosting bucket
+    // Step 1: Wipe all associated images from Cloudinary storage first
     await CloudinaryService.deleteEventFolder(eventId: eventId);
     
-    // 2. Erase Attendees Subcollection
+    // Step 2: Delete every document in the attendees subcollection
     final attendees = await _firestore.collection(_collection).doc(eventId).collection('attendees').get();
     for (final doc in attendees.docs) {
       await doc.reference.delete();
     }
     
-    // 3. Erase Photos Subcollection
+    // Step 3: Delete every document in the photos subcollection
     final photos = await _firestore.collection(_collection).doc(eventId).collection('photos').get();
     for (final doc in photos.docs) {
       await doc.reference.delete();
     }
     
-    // 4. Erase the architectural Event skeleton
+    // Step 4: Delete the main event document itself
     await _firestore.collection(_collection).doc(eventId).delete();
   }
 
