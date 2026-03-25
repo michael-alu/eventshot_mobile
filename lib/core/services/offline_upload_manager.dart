@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../features/attendee/data/repositories/attendee_repository.dart';
+import '../../../core/providers/preferences_provider.dart';
 
 class PendingUpload {
   final String id;
@@ -46,6 +47,13 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
   List<PendingUpload> build() {
     _loadFromPrefs();
     _listenToConnectivity();
+    
+    ref.listen(wifiSyncModeProvider, (previous, next) {
+      if (previous == true && next == false) {
+        _syncQueue(); // Instantly fire background queue if user turns OFF wifi protection 
+      }
+    });
+    
     return [];
   }
 
@@ -69,8 +77,9 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
 
   void _listenToConnectivity() {
     Connectivity().onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.mobile) ||
-          results.contains(ConnectivityResult.wifi)) {
+      final wifiSyncOnly = ref.read(wifiSyncModeProvider);
+      if (results.contains(ConnectivityResult.wifi) ||
+          (!wifiSyncOnly && results.contains(ConnectivityResult.mobile))) {
         _syncQueue();
       }
     });
@@ -101,6 +110,11 @@ class OfflineUploadManager extends Notifier<List<PendingUpload>> {
     if (!connectivityResult.contains(ConnectivityResult.mobile) &&
         !connectivityResult.contains(ConnectivityResult.wifi)) {
       return; // No internet available
+    }
+
+    final wifiSyncOnly = ref.read(wifiSyncModeProvider);
+    if (wifiSyncOnly && !connectivityResult.contains(ConnectivityResult.wifi)) {
+      return; // Abort sync, user is on cellular block
     }
 
     _isSyncing = true;

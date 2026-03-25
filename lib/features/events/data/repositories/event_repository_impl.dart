@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/event.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../models/event_model.dart';
+import '../../../../core/services/cloudinary_service.dart';
 
 class EventRepositoryImpl implements EventRepository {
   EventRepositoryImpl({FirebaseFirestore? firestore})
@@ -71,6 +72,22 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<void> deleteEvent(String eventId) async {
+    // 1. Permanently wipe all associated images from the Cloudinary hosting bucket
+    await CloudinaryService.deleteEventFolder(eventId: eventId);
+    
+    // 2. Erase Attendees Subcollection
+    final attendees = await _firestore.collection(_collection).doc(eventId).collection('attendees').get();
+    for (final doc in attendees.docs) {
+      await doc.reference.delete();
+    }
+    
+    // 3. Erase Photos Subcollection
+    final photos = await _firestore.collection(_collection).doc(eventId).collection('photos').get();
+    for (final doc in photos.docs) {
+      await doc.reference.delete();
+    }
+    
+    // 4. Erase the architectural Event skeleton
     await _firestore.collection(_collection).doc(eventId).delete();
   }
 

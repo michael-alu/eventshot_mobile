@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -11,10 +12,18 @@ import '../../events/presentation/providers/event_providers.dart';
 
 final userJoinedEventsProvider = FutureProvider.autoDispose<List<Event>>((ref) async {
   final authUser = ref.watch(authStateProvider).valueOrNull;
-  if (authUser == null || authUser.joinedEvents == null || authUser.joinedEvents!.isEmpty) return [];
-  
+  if (authUser == null) return [];
+
   final repo = ref.read(eventRepositoryProvider);
-  final futures = authUser.joinedEvents!.map((id) => repo.getEvent(id));
+  
+  final snapshot = await FirebaseFirestore.instance
+      .collectionGroup('attendees')
+      .where('id', isEqualTo: authUser.id)
+      .get();
+      
+  final eventIds = snapshot.docs.map((doc) => doc.reference.parent.parent!.id).toList();
+
+  final futures = eventIds.map((id) => repo.getEvent(id));
   final results = await Future.wait(futures);
   return results.whereType<Event>().toList()
     ..sort((a, b) => b.date.compareTo(a.date));
@@ -45,11 +54,20 @@ class UserDashboardScreen extends ConsumerWidget {
                     Text('No events yet', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     Text(
-                      'Join an event from the home screen to access its photos here.',
+                      'Join an event to start capturing and accessing photos.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () => context.push(AppRouter.attendeeManualCode),
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Join an Event'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                      ),
                     ),
                   ],
                 ),
@@ -65,7 +83,7 @@ class UserDashboardScreen extends ConsumerWidget {
               return _UserEventCard(
                 event: event,
                 onTap: () {
-                  context.push('${AppRouter.gallery}/${event.id}');
+                  context.push('${AppRouter.gallery}/${event.id}?from=dashboard');
                 },
               );
             },

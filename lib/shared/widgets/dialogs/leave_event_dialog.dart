@@ -27,8 +27,6 @@ class LeaveEventDialog {
           ),
           FilledButton(
             onPressed: () {
-              // We do not clear the cache here so AuthRepositoryImpl can securely port 
-              // the active event into joinedEvents upon successful signup/login
               if (ctx.mounted) ctx.pop();
               if (context.mounted) context.push(AppRouter.attendeeSignUp);
             },
