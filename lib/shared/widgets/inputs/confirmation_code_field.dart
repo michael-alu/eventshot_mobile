@@ -61,78 +61,92 @@ class _ConfirmationCodeFieldState extends State<ConfirmationCodeField> {
     final borderColor = isDark ? Colors.white24 : AppColors.borderLight;
     final focusColor = AppColors.primary;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(widget.length, (index) {
-        return Padding(
-          padding: EdgeInsets.only(left: index == 0 ? 0 : 8, right: index == widget.length - 1 ? 0 : 8),
-          child: SizedBox(
-            width: 48,
-            height: 64,
-            child: TextFormField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.text,
-              textCapitalization: TextCapitalization.characters,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                LengthLimitingTextInputFormatter(widget.length),
-              ],
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-              decoration: InputDecoration(
-                counterText: '',
-                contentPadding: EdgeInsets.zero,
-                filled: true,
-                fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  borderSide: BorderSide.none,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(widget.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : 8,
+              right: index == widget.length - 1 ? 0 : 8,
+            ),
+            child: SizedBox(
+              width: 48,
+              height: 64,
+              child: TextFormField(
+                controller: _controllers[index],
+                focusNode: _focusNodes[index],
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                  LengthLimitingTextInputFormatter(widget.length),
+                ],
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  borderSide: BorderSide(color: borderColor, width: 2),
+                decoration: InputDecoration(
+                  counterText: '',
+                  contentPadding: EdgeInsets.zero,
+                  filled: true,
+                  fillColor: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    borderSide: BorderSide(color: borderColor, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    borderSide: BorderSide(color: focusColor, width: 2),
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  borderSide: BorderSide(color: focusColor, width: 2),
-                ),
-              ),
-              onChanged: (value) {
-                if (value.length > 1) {
-                  final pasteChars = value.toUpperCase().split('');
-                  for (var i = 0; i < pasteChars.length; i++) {
-                    final targetIndex = index + i;
-                    if (targetIndex < widget.length) {
-                      _controllers[targetIndex].text = pasteChars[i];
+                onChanged: (value) {
+                  if (value.length > 1) {
+                    final pasteChars = value.toUpperCase().split('');
+                    for (var i = 0; i < pasteChars.length; i++) {
+                      final targetIndex = index + i;
+                      if (targetIndex < widget.length) {
+                        _controllers[targetIndex].text = pasteChars[i];
+                      }
                     }
+                    final nextFocusIndex = index + pasteChars.length;
+                    if (nextFocusIndex < widget.length) {
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(_focusNodes[nextFocusIndex]);
+                    } else {
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(_focusNodes[widget.length - 1]);
+                    }
+                    _onChanged();
+                    return;
                   }
-                  final nextFocusIndex = index + pasteChars.length;
-                  if (nextFocusIndex < widget.length) {
-                    FocusScope.of(context).requestFocus(_focusNodes[nextFocusIndex]);
-                  } else {
-                    FocusScope.of(context).requestFocus(_focusNodes[widget.length - 1]);
+
+                  if (value.isNotEmpty) {
+                    _controllers[index].text = value.toUpperCase();
+                    if (index < widget.length - 1) {
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(_focusNodes[index + 1]);
+                    }
+                  } else if (index > 0) {
+                    FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
                   }
                   _onChanged();
-                  return;
-                }
-
-                if (value.isNotEmpty) {
-                  _controllers[index].text = value.toUpperCase();
-                  if (index < widget.length - 1) {
-                    FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-                  }
-                } else if (index > 0) {
-                  FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
-                }
-                _onChanged();
-              },
+                },
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 }

@@ -10,13 +10,10 @@ Widget _buildSubject() {
   final router = GoRouter(
     initialLocation: '/welcome',
     routes: [
-      GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
+      GoRoute(path: '/welcome', builder: (_, _) => const WelcomeScreen()),
       // Stub destinations so navigation doesn't throw
-      GoRoute(
-        path: '/auth/organizer-signup',
-        builder: (_, __) => const _Stub(),
-      ),
-      GoRoute(path: '/attendee/scan', builder: (_, __) => const _Stub()),
+      GoRoute(path: '/auth/organizer-signup', builder: (_, _) => const _Stub()),
+      GoRoute(path: '/attendee/scan', builder: (_, _) => const _Stub()),
     ],
   );
 
