@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/domain/entities/organizer.dart';
 import '../../features/attendee/presentation/attendee_camera_screen.dart';
 import '../../features/attendee/presentation/manual_code_entry_screen.dart';
 import '../../features/attendee/presentation/photo_review_screen.dart';
@@ -48,40 +49,51 @@ class AppRouter {
   static const String photoReview = '/photo-review';
   static const String createEvent = '/create-event';
 
+  static String? redirectLogic({
+    required String matchedLocation,
+    required AsyncValue<Organizer?> authState,
+    bool isAnon = false,
+  }) {
+    if (authState.isLoading) return null;
+
+    final authUser = authState.valueOrNull;
+    if (matchedLocation == '/organizer' || matchedLocation == '/organizer/') {
+      return organizerDashboard;
+    }
+
+    final inAuthFlow = matchedLocation == welcome || matchedLocation.startsWith('/auth');
+    final inOrganizerFlow = matchedLocation.startsWith('/organizer') || matchedLocation == createEvent;
+    final inUserFlow = matchedLocation.startsWith('/user');
+
+    if (authUser != null && inAuthFlow) {
+      if (!isAnon) {
+        return authUser.role == 'attendee' ? userDashboard : organizerDashboard;
+      }
+    }
+
+    if (authUser != null && !isAnon) {
+      if (authUser.role == 'attendee' && inOrganizerFlow) return userDashboard;
+      if (authUser.role != 'attendee' && inUserFlow) return organizerDashboard;
+    }
+
+    if ((authUser == null || isAnon) && (inOrganizerFlow || inUserFlow)) {
+      return welcome;
+    }
+
+    return null;
+  }
+
   static GoRouter createRouter(Ref ref) {
     return GoRouter(
       initialLocation: welcome,
       redirect: (context, state) {
-        final authState = ref.read(authStateProvider);
-        if (authState.isLoading) return null;
-
-        final authUser = authState.valueOrNull;
-        if (state.matchedLocation == '/organizer' || state.matchedLocation == '/organizer/') {
-          return organizerDashboard;
-        }
-
-        final inAuthFlow = state.matchedLocation == welcome || state.matchedLocation.startsWith('/auth');
-        final inOrganizerFlow = state.matchedLocation.startsWith('/organizer') || state.matchedLocation == createEvent;
-        final inUserFlow = state.matchedLocation.startsWith('/user');
-
+        final authState = ref.watch(authStateProvider);
         final isAnon = FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
-        
-        if (authUser != null && inAuthFlow) {
-          if (!isAnon) {
-            return authUser.role == 'attendee' ? userDashboard : organizerDashboard;
-          }
-        }
-        
-        if (authUser != null && !isAnon) {
-          if (authUser.role == 'attendee' && inOrganizerFlow) return userDashboard;
-          if (authUser.role != 'attendee' && inUserFlow) return organizerDashboard;
-        }
-
-        if ((authUser == null || isAnon) && (inOrganizerFlow || inUserFlow)) {
-          return welcome;
-        }
-
-        return null;
+        return redirectLogic(
+          matchedLocation: state.matchedLocation,
+          authState: authState,
+          isAnon: isAnon,
+        );
       },
       routes: [
         GoRoute(
